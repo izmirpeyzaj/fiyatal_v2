@@ -1,0 +1,471 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { ChevronLeft, ChevronRight, ChevronDown, Camera, Image, CheckCircle, Info, X, MessageSquare, MessageCircleQuestion, Search } from 'lucide-astro';
+
+const { id } = Astro.params;
+---
+
+<Layout title="Teklif Hazırla" role="seller">
+	<div class="fixed inset-0 bg-slate-50 flex flex-col pt-16 pb-20 md:pb-0 h-screen overflow-hidden">
+		<!-- Header -->
+		<div class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+			<div class="flex-1">
+				<div class="flex items-center gap-1 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+					<span id="current-index">1</span> / <span id="total-count">...</span> Ürün
+				</div>
+				<div class="w-full bg-slate-100 h-1.5 rounded-full mt-1 overflow-hidden">
+					<div id="progress-bar" class="bg-blue-600 h-full transition-all duration-300" style="width: 0%"></div>
+				</div>
+			</div>
+			<div class="flex items-center gap-2">
+				<button id="btn-ask-question" class="p-2 text-purple-600 bg-purple-50 rounded-xl hover:bg-purple-100 transition-all flex items-center gap-1.5 px-3">
+					<MessageCircleQuestion size={18} />
+					<span class="text-[10px] font-black uppercase tracking-wider">Soru Sor</span>
+				</button>
+				<button id="close-quote" class="p-2 text-slate-400 hover:text-slate-600">
+					<ChevronDown size={24} class="rotate-90 md:rotate-0" />
+				</button>
+			</div>
+		</div>
+
+		<!-- Expired Alert -->
+		<div id="expired-alert" class="hidden absolute inset-0 z-[100] bg-slate-900/80 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center text-white">
+			<div class="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center mb-6 shadow-2xl shadow-red-500/40">
+				<X size={40} />
+			</div>
+			<h2 class="text-3xl font-black mb-2 uppercase tracking-tighter">SÜRE DOLDU</h2>
+			<p class="text-slate-300 font-medium mb-8">Bu talebin son teklif verme süresi dolmuştur. Yeni teklif verilemez veya güncellenemez.</p>
+			<a href="/seller/dashboard" class="btn-primary bg-white text-slate-900 border-none hover:bg-slate-100 font-black">PANELISTE DÖN</a>
+		</div>
+
+		<!-- Card Area -->
+		<div class="flex-grow relative overflow-hidden flex items-center justify-center p-4">
+			<div id="quote-card" class="glass-card w-full max-w-lg rounded-3xl p-6 shadow-2xl transition-all duration-300 flex flex-col h-[60vh] md:h-auto overflow-y-auto custom-scrollbar">
+				<div id="card-content" class="flex-grow space-y-4">
+					<div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+						<div class="flex items-center justify-between mb-2">
+							<div class="flex items-center gap-2 text-slate-400">
+								<Info size={14} />
+								<span class="text-[10px] font-bold uppercase tracking-wider">Ürün Özellikleri</span>
+							</div>
+							<button id="btn-item-qa" class="hidden items-center gap-1.5 px-3 py-1 bg-purple-100 text-purple-700 rounded-full hover:bg-purple-200 transition-all">
+								<MessageSquare size={12} />
+								<span id="qa-count-text" class="text-[10px] font-black uppercase tracking-widest">0 Soru, 0 Yanıt</span>
+							</button>
+						</div>
+						<div id="item-properties" class="grid grid-cols-2 gap-x-4 gap-y-2"></div>
+					</div>
+
+					<div class="space-y-3 relative">
+... (rest of the content)
+						<div class="flex justify-between items-center">
+							<label class="block text-sm font-bold text-slate-900">Birim Fiyat (₺)</label>
+							<button id="btn-yok" class="px-4 py-1.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-black tracking-widest hover:bg-red-50 hover:text-red-600 transition-all border border-slate-200">
+								X YOK
+							</button>
+						</div>
+						<input type="number" id="unit-price" inputmode="decimal" placeholder="0.00" class="w-full text-4xl font-extrabold text-blue-600 h-20 text-center bg-white border-2 border-slate-100 rounded-2xl focus:border-blue-500 transition-all outline-none" />
+					</div>
+
+					<div class="grid grid-cols-2 gap-3" id="photo-section">
+						<button class="flex flex-col items-center justify-center gap-2 p-4 h-24 border-2 border-dashed border-slate-200 rounded-2xl hover:bg-slate-50 text-slate-500 relative overflow-hidden">
+							<Camera size={24} />
+							<span class="text-xs font-bold">Kamera</span>
+							<input type="file" capture="environment" id="camera-input" class="absolute inset-0 opacity-0 cursor-pointer" />
+							<img id="cam-preview" class="absolute inset-0 w-full h-full object-cover hidden" />
+						</button>
+						<button class="flex flex-col items-center justify-center gap-2 p-4 h-24 border-2 border-dashed border-slate-200 rounded-2xl hover:bg-slate-50 text-slate-500 relative overflow-hidden">
+							<Image size={24} />
+							<span class="text-xs font-bold">Galeri</span>
+							<input type="file" id="gallery-input" class="absolute inset-0 opacity-0 cursor-pointer" />
+							<img id="gal-preview" class="absolute inset-0 w-full h-full object-cover hidden" />
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Footer Controls -->
+		<div class="mt-auto bg-white border-t border-slate-200 pt-3 pb-8 md:pb-6 px-6 flex items-center justify-between gap-4">
+			<button id="btn-prev" class="btn-secondary flex-1 py-4 flex items-center justify-center gap-2">
+				<ChevronLeft size={20} /> Önceki
+			</button>
+			<button id="btn-next" class="btn-primary flex-[2] py-4 flex items-center justify-center gap-2 h-14 text-lg">
+				<span id="next-text">Sonraki Ürün</span> <ChevronRight size={20} />
+			</button>
+		</div>
+		</div>
+	</div>
+
+	<!-- Question Modal -->
+	<div id="question-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] hidden flex items-center justify-center p-4">
+		<div class="glass-card w-full max-w-md p-8 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-200">
+			<div class="flex items-center gap-3 mb-6">
+				<div class="p-2 bg-purple-100 text-purple-600 rounded-xl">
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-square-text"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M13 8H7"/><path d="M11 12H7"/></svg>
+				</div>
+				<div>
+					<h3 class="text-xl font-black text-slate-900 leading-tight">Soru Sor</h3>
+					<p id="question-context-label" class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Teknik detaylar hakkında bilgi alın</p>
+				</div>
+			</div>
+			
+			<textarea id="question-text" class="input-field min-h-[120px] mb-6 p-4" placeholder="Alıcının cevapladığı sorular tüm satıcılar tarafından görülebilir..."></textarea>
+			
+			<div class="flex gap-3">
+				<button id="close-question-modal" class="btn-secondary flex-1">Vazgeç</button>
+				<button id="submit-question" class="btn-primary flex-1 bg-purple-600 hover:bg-purple-700">Gönder</button>
+			</div>
+
+			<div class="mt-8 pt-6 border-t border-slate-100">
+				<p id="questions-list-title" class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Önceki Sorular</p>
+				<div id="prev-questions" class="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+					<!-- Questions -->
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script is:inline>
+		const id = window.location.pathname.split('/').pop();
+		let state = {
+			items: [],
+			currentIndex: 0,
+			prices: {},
+			photos: {}
+		};
+
+		const propsContainer = document.getElementById('item-properties');
+		const priceInput = document.getElementById('unit-price');
+		const currIdxText = document.getElementById('current-index');
+		const totalText = document.getElementById('total-count');
+		const progressBar = document.getElementById('progress-bar');
+		const nextBtn = document.getElementById('btn-next');
+		const nextText = document.getElementById('next-text');
+		const prevBtn = document.getElementById('btn-prev');
+		const yokBtn = document.getElementById('btn-yok');
+		const cameraInput = document.getElementById('camera-input');
+		const galleryInput = document.getElementById('gallery-input');
+		const camPreview = document.getElementById('cam-preview');
+		const galPreview = document.getElementById('gal-preview');
+
+		const prevQuestions = document.getElementById('prev-questions');
+		const questionModal = document.getElementById('question-modal');
+		const questionText = document.getElementById('question-text');
+		const submitQuestionBtn = document.getElementById('submit-question');
+
+		async function initQuote() {
+			try {
+				const res = await fetch(`http://localhost:3001/api/seller/requests/${id}`, { credentials: 'include' });
+				const req = await res.json();
+				
+				// Deadline Check
+				if (req.expires_at) {
+					const now = new Date();
+					const deadline = new Date(req.expires_at);
+					if (now > deadline) {
+						document.getElementById('expired-alert').classList.remove('hidden');
+						return;
+					}
+				}
+
+				state.items = req.items;
+				totalText.textContent = state.items.length;
+
+				// Revision logic: Check for existing offer
+				try {
+					const oRes = await fetch(`http://localhost:3001/api/seller/requests/${id}/my-offer`, { credentials: 'include' });
+					if (oRes.ok) {
+						const myOffer = await oRes.json();
+						if (myOffer) {
+							// Pre-fill existing prices and photos
+							myOffer.items.forEach(it => {
+								state.prices[it.request_item_id] = it.unit_price;
+								if (it.photo_url) state.photos[it.request_item_id] = it.photo_url;
+							});
+						}
+					}
+				} catch (oErr) { console.warn("No existing offer found", oErr); }
+
+				renderCard();
+				loadQuestions();
+			} catch (err) { console.error(err); }
+		}
+
+		let allQuestions = [];
+
+		async function initQuote() {
+			try {
+				const res = await fetch(`http://localhost:3001/api/seller/requests/${id}`, { credentials: 'include' });
+				const req = await res.json();
+				
+				// Deadline Check
+				if (req.expires_at) {
+					const now = new Date();
+					const deadline = new Date(req.expires_at);
+					if (now > deadline) {
+						document.getElementById('expired-alert').classList.remove('hidden');
+						return;
+					}
+				}
+
+				state.items = req.items;
+				totalText.textContent = state.items.length;
+
+				// Revision logic: Check for existing offer
+				try {
+					const oRes = await fetch(`http://localhost:3001/api/seller/requests/${id}/my-offer`, { credentials: 'include' });
+					if (oRes.ok) {
+						const myOffer = await oRes.json();
+						if (myOffer) {
+							// Pre-fill existing prices and photos
+							myOffer.items.forEach(it => {
+								state.prices[it.request_item_id] = it.unit_price;
+								if (it.photo_url) state.photos[it.request_item_id] = it.photo_url;
+							});
+						}
+					}
+				} catch (oErr) { console.warn("No existing offer found", oErr); }
+
+				renderCard();
+				await loadQuestions();
+			} catch (err) { console.error(err); }
+		}
+
+		async function loadQuestions() {
+			try {
+				const res = await fetch(`http://localhost:3001/api/requests/${id}/questions`, { credentials: 'include' });
+				allQuestions = await res.json();
+			} catch (err) { console.error(err); }
+		}
+
+		function showQuestionModal(showOnlyCurrentItem = false) {
+			const item = state.items[state.currentIndex];
+			
+			if (showOnlyCurrentItem) {
+				document.getElementById('question-context-label').textContent = `Kalem [${item.item_order}] Hakkında Detay Alın`;
+				document.getElementById('questions-list-title').textContent = "Bu Kaleme Özel Sorular";
+				renderQuestions(item.id);
+			} else {
+				document.getElementById('question-context-label').textContent = "Genel Teknik Detaylar Hakkında Bilgi Alın";
+				document.getElementById('questions-list-title').textContent = "Talebe Özel Tüm Sorular";
+				renderQuestions(null);
+			}
+			questionModal.classList.remove('hidden');
+		}
+
+		function renderQuestions(itemId = null) {
+			const filtered = itemId 
+				? allQuestions.filter(q => q.request_item_id === itemId)
+				: allQuestions;
+
+			prevQuestions.innerHTML = filtered.length ? filtered.map(q => `
+				<div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+					${q.request_item_id ? `<span class="inline-block text-[8px] font-black bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full mb-1">KALEM #${state.items.findIndex(it => it.id === q.request_item_id) + 1}</span>` : ''}
+					<p class="text-[10px] font-black text-purple-600 uppercase tracking-widest mb-1 italic">Soru:</p>
+					<p class="text-xs text-slate-900 font-bold mb-2">${q.question}</p>
+					${q.answer ? `
+						<div class="mt-2 pl-3 border-l-2 border-green-500">
+							<p class="text-[10px] font-black text-green-600 uppercase tracking-widest mb-0.5 italic">Yanıt:</p>
+							<p class="text-[11px] text-slate-700 font-medium">${q.answer}</p>
+						</div>
+					` : '<p class="text-[10px] text-slate-400 font-bold italic">Henüz yanıtlanmamış.</p>'}
+				</div>
+			`).join('') : '<p class="text-[10px] text-slate-400 font-bold text-center py-4">Henüz soru sorulmamış.</p>';
+		}
+
+		document.getElementById('btn-ask-question').onclick = () => showQuestionModal(false);
+		document.getElementById('btn-item-qa').onclick = () => showQuestionModal(true);
+		document.getElementById('close-question-modal').onclick = () => questionModal.classList.add('hidden');
+
+		submitQuestionBtn.onclick = async () => {
+			if (!questionText.value) return;
+			submitQuestionBtn.disabled = true;
+			const item = state.items[state.currentIndex];
+			
+			// If modal is showing item-specific context or we are in the flow, associate with item
+			// Actually, let's always associate with item if we use the item-specific btn or if we want to be safe
+			// For now, if "Bu Kaleme Özel Sorular" is the title, it's specific.
+			const isItemSpecific = document.getElementById('questions-list-title').textContent.includes("Kaleme");
+
+			try {
+				const res = await fetch(`http://localhost:3001/api/requests/${id}/questions`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ 
+						question: questionText.value,
+						request_item_id: isItemSpecific ? item.id : null
+					}),
+					credentials: 'include'
+				});
+				if (res.ok) {
+					questionText.value = '';
+					await loadQuestions();
+					renderQuestions(isItemSpecific ? item.id : null);
+					alert('Sorunuz iletildi, yanıtlandığında burada görebileceksiniz.');
+				}
+			} catch (err) { console.error(err); }
+			finally { submitQuestionBtn.disabled = false; }
+		};
+
+		function renderCard() {
+			const item = state.items[state.currentIndex];
+			currIdxText.textContent = state.currentIndex + 1;
+			progressBar.style.width = `${((state.currentIndex + 1) / state.items.length) * 100}%`;
+			
+			// Render props with matching labels
+			const properties = item.properties || {};
+					
+			const normalize = (str) => {
+				if (!str) return '';
+				return str.toLowerCase()
+					.replace(/ı/g, 'i')
+					.replace(/ğ/g, 'g')
+					.replace(/ü/g, 'u')
+					.replace(/ş/g, 's')
+					.replace(/ö/g, 'o')
+					.replace(/ç/g, 'c')
+					.replace(/i̇/g, 'i') // Handleİ -> i̇ combined char
+					.trim();
+			};
+
+			const findVal = (keys) => {
+				const entries = Object.entries(properties);
+				for (const [k, v] of entries) {
+					const normalizedK = normalize(k);
+					if (keys.some(key => normalizedK.includes(normalize(key)))) {
+						return v;
+					}
+				}
+				return null;
+			};
+
+			const displayProps = [
+				{ label: 'İŞİN TANIMI', val: findVal(['açıklama', 'tanım', 'is', 'urun', 'item']) || 'İsimsiz Ürün' },
+				{ label: 'MİKTARI', val: findVal(['miktar', 'adet', 'sayi', 'qty']) || '-' },
+				{ label: 'BİRİM', val: findVal(['birim', 'olcu', 'unit']) || '-' },
+				{ label: 'NO', val: findVal(['poz', 'kalem', 'no', 'sira']) || item.item_order || item.id }
+			];
+
+			propsContainer.innerHTML = displayProps.map(prop => `
+				<div class="py-1 border-b border-slate-50 last:border-0 hover:bg-white transition-colors rounded-lg px-2">
+					<span class="block text-[8px] text-slate-400 font-black tracking-widest uppercase mb-0.5">${prop.label}</span>
+					<span class="block text-[13px] text-slate-900 font-bold leading-tight">${prop.val}</span>
+				</div>
+			`).join('');
+
+			// Update Item Q&A Button
+			const btnItemQa = document.getElementById('btn-item-qa');
+			const qaCountText = document.getElementById('qa-count-text');
+			
+			if (item.question_count > 0) {
+				btnItemQa.classList.remove('hidden');
+				btnItemQa.classList.add('flex');
+				qaCountText.textContent = `${item.question_count} SORU, ${item.answer_count} YANIT`;
+			} else {
+				btnItemQa.classList.add('hidden');
+				btnItemQa.classList.remove('flex');
+			}
+
+			// Load saved values
+			priceInput.value = state.prices[item.id] || '';
+			
+			// Reset previews
+			camPreview.src = ''; camPreview.classList.add('hidden');
+			galPreview.src = ''; galPreview.classList.add('hidden');
+			if(state.photos[item.id]) {
+				galPreview.src = state.photos[item.id];
+				galPreview.classList.remove('hidden');
+			}
+
+			// Update buttons
+			nextText.textContent = state.currentIndex === state.items.length - 1 ? 'Teklifi Tamamla' : 'Sonraki Ürün';
+			prevBtn.disabled = state.currentIndex === 0;
+			prevBtn.classList.toggle('opacity-50', state.currentIndex === 0);
+		}
+
+		function saveCurrent() {
+			const item = state.items[state.currentIndex];
+			state.prices[item.id] = priceInput.value;
+		}
+
+		nextBtn.onclick = () => {
+			saveCurrent();
+			if (state.currentIndex < state.items.length - 1) {
+				state.currentIndex++;
+				renderCard();
+			} else {
+				// Finish - store state in sessionStorage and redirect
+				sessionStorage.setItem('current_quote', JSON.stringify(state));
+				window.location.href = `/seller/quote/${id}/finish`;
+			}
+		};
+
+		prevBtn.onclick = () => {
+			saveCurrent();
+			if (state.currentIndex > 0) {
+				state.currentIndex--;
+				renderCard();
+			}
+		};
+
+		yokBtn.onclick = () => {
+			priceInput.value = '0'; // Using 0 to indicate YOK/NA
+			nextBtn.click();
+		};
+
+		// Photo handling
+		async function handleFile(input, preview) {
+			input.onchange = async (e) => {
+				const file = e.target.files[0];
+				if(!file) return;
+
+				// Show local preview immediately
+				const reader = new FileReader();
+				reader.onload = (evt) => {
+					preview.src = evt.target.result;
+					preview.classList.remove('hidden');
+					preview.style.opacity = '0.5'; // dimmed while uploading
+				};
+				reader.readAsDataURL(file);
+
+				// Upload to server
+				const formData = new FormData();
+				formData.append('photo', file);
+
+				try {
+					const res = await fetch('http://localhost:3001/api/upload', {
+						method: 'POST',
+						body: formData,
+						credentials: 'include'
+					});
+					const data = await res.json();
+					if (data.url) {
+						state.photos[state.items[state.currentIndex].id] = `http://localhost:3001${data.url}`;
+						preview.src = `http://localhost:3001${data.url}`;
+						preview.style.opacity = '1';
+					} else {
+						alert('Yükleme hatası: ' + (data.error || 'Bilinmeyen hata'));
+						preview.style.opacity = '1';
+					}
+				} catch (err) {
+					console.error(err);
+					alert('Yükleme sırasında teknik bir hata oluştu.');
+				}
+			};
+		}
+		handleFile(cameraInput, camPreview);
+		handleFile(galleryInput, galPreview);
+
+		// Swipe Gestures
+		let startX = 0;
+		document.getElementById('quote-card').addEventListener('touchstart', e => startX = e.touches[0].clientX);
+		document.getElementById('quote-card').addEventListener('touchend', e => {
+			const diff = startX - e.changedTouches[0].clientX;
+			if (diff > 50) nextBtn.click();
+			if (diff < -50) prevBtn.click();
+		});
+
+		initQuote();
+	</script>
+</Layout>

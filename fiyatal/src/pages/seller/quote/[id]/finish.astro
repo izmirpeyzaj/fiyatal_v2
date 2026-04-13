@@ -1,0 +1,364 @@
+---
+import Layout from '../../../../layouts/Layout.astro';
+import { MapPin, Truck, MessageSquare, Send, CheckCircle2 } from 'lucide-astro';
+
+const { id } = Astro.params;
+---
+
+<Layout title="Teklifi Tamamla" role="seller">
+	<div class="max-w-xl mx-auto px-4 py-8 pb-32">
+		<div class="text-center mb-8">
+			<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Son Adım</h1>
+			<p class="text-slate-500 font-medium">Teklifinizi göndermeden önce detayları netleştirin</p>
+		</div>
+
+		<div class="space-y-8">
+			<!-- Section 1: Location -->
+			<div class="space-y-3">
+				<div class="flex items-center justify-between">
+					<label class="text-sm font-bold text-slate-700 flex items-center gap-2">
+						<MapPin size={18} class="text-blue-600" />
+						Konumunuz
+					</label>
+					<button id="get-location" class="text-xs font-bold text-blue-600 hover:underline">
+						📍 Mevcut Konumumu Kullan
+					</button>
+				</div>
+				<div id="map" class="h-48 w-full rounded-2xl border border-slate-200 z-0"></div>
+				<p id="address-text" class="text-xs bg-slate-50 p-3 rounded-xl border border-slate-100 text-slate-600 italic">
+					Henüz konum seçilmedi
+				</p>
+			</div>
+
+			<!-- Section 2: Shipping -->
+			<div class="space-y-3">
+				<label class="text-sm font-bold text-slate-700 flex items-center gap-2">
+					<Truck size={18} class="text-blue-600" />
+					Nakliye Durumu
+				</label>
+				<div class="grid grid-cols-2 gap-3">
+					<button type="button" data-val="1" class="shipping-btn p-4 rounded-2xl border-2 border-slate-100 flex flex-col items-center gap-1 transition-all">
+						<span class="text-lg font-bold">DAHİL</span>
+						<span class="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Fiyata Ekli</span>
+					</button>
+					<button type="button" data-val="0" class="shipping-btn p-4 rounded-2xl border-2 border-slate-100 flex flex-col items-center gap-1 transition-all">
+						<span class="text-lg font-bold">HARİÇ</span>
+						<span class="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Ayrı Hesaplanır</span>
+					</button>
+				</div>
+			</div>
+
+			<!-- Section 3: Notes -->
+			<div class="space-y-3">
+				<label class="text-sm font-bold text-slate-700 flex items-center gap-2">
+					<MessageSquare size={18} class="text-blue-600" />
+					Ek Notlar & Açıklamalar
+				</label>
+				<textarea id="notes" class="w-full input-field min-h-[100px] p-4 text-sm" placeholder="Teslimat süresi, özel şartlar veya ek bilgiler..."></textarea>
+			</div>
+
+			<!-- Section 4: Technical Documents -->
+			<div class="space-y-3 pt-6 border-t border-slate-100">
+				<label class="text-sm font-bold text-slate-700 flex items-center justify-between">
+					<div class="flex items-center gap-2">
+						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.51a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+						Dökümanlar & Kataloglar
+					</div>
+					<button id="open-library-btn" class="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-600 hover:bg-slate-200 transition-all">📚 Kütüphaneden Seç</button>
+				</label>
+				
+				<div class="grid grid-cols-2 gap-3">
+					<div class="p-3 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-center relative overflow-hidden group">
+						<input type="file" id="asset-file" class="absolute inset-0 opacity-0 cursor-pointer" />
+						<span class="text-[10px] font-bold text-slate-500 group-hover:text-blue-600 transition-colors">📄 Dosya Yükle</span>
+					</div>
+					<div class="flex gap-2">
+						<input type="text" id="asset-link-input" class="flex-grow input-field h-9 text-[10px]" placeholder="Link..." />
+						<button id="add-link-btn" class="btn-primary h-9 px-3 text-[10px]">Ekle</button>
+					</div>
+				</div>
+
+				<div id="attached-assets-list" class="flex flex-wrap gap-2 pt-2">
+					<!-- Assets -->
+				</div>
+			</div>
+
+			<div class="bg-blue-50 border border-blue-100 p-4 rounded-2xl flex items-start gap-3">
+				<CheckCircle2 size={24} class="text-blue-600 shrink-0" />
+				<div>
+					<p class="text-sm font-bold text-blue-900"><span id="priced-count">0</span> Ürüne Fiyat Verildi</p>
+					<p class="text-xs text-blue-700 mt-0.5">Teklif gönderildikten sonra alıcı tarafına anlık olarak iletilecektir.</p>
+				</div>
+			</div>
+
+			<button id="final-submit" class="btn-primary w-full h-14 text-lg font-bold rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-blue-500/30">
+				<Send size={24} />
+				Teklifi Gönder
+			</button>
+		</div>
+	</div>
+
+	<script is:inline src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+	<script is:inline>
+		const id = window.location.pathname.split('/')[3];
+		const sessionData = JSON.parse(sessionStorage.getItem('current_quote'));
+		
+		if(!sessionData) window.location.href = `/seller/request/${id}`;
+
+		document.getElementById('priced-count').textContent = Object.values(sessionData.prices).filter(p => p !== '').length;
+
+		let map, marker;
+		let finalState = {
+			seller_lat: null,
+			seller_lng: null,
+			seller_address: '',
+			shipping_included: null,
+			notes: ''
+		};
+
+		// Map Init
+		function initMap() {
+			map = L.map('map').setView([39.9, 32.8], 6);
+			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+			map.on('click', (e) => setPin(e.latlng.lat, e.latlng.lng));
+
+			document.getElementById('get-location').onclick = () => {
+				navigator.geolocation.getCurrentPosition(pos => {
+					map.setView([pos.coords.latitude, pos.coords.longitude], 15);
+					setPin(pos.coords.latitude, pos.coords.longitude);
+				});
+			};
+		}
+
+		async function setPin(lat, lng) {
+			if(marker) map.removeLayer(marker);
+			marker = L.marker([lat, lng]).addTo(map);
+			finalState.seller_lat = lat;
+			finalState.seller_lng = lng;
+
+			const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+			const data = await res.json();
+			finalState.seller_address = data.display_name;
+			document.getElementById('address-text').textContent = data.display_name;
+		}
+
+		// Shipping Selection
+		const btns = document.querySelectorAll('.shipping-btn');
+		btns.forEach(btn => {
+			btn.onclick = () => {
+				btns.forEach(b => b.classList.remove('border-blue-600', 'bg-blue-50', 'ring-4', 'ring-blue-100'));
+				btn.classList.add('border-blue-600', 'bg-blue-50', 'ring-4', 'ring-blue-100');
+				finalState.shipping_included = btn.dataset.val === '1';
+			};
+		});
+
+		// Submit Function
+		document.getElementById('final-submit').onclick = async () => {
+			if(finalState.shipping_included === null) return alert('Lütfen nakliye durumunu seçin.');
+			
+			const btn = document.getElementById('final-submit');
+			btn.disabled = true;
+			btn.textContent = 'Gönderiliyor...';
+
+			const payload = {
+				request_id: parseInt(id),
+				shipping_included: finalState.shipping_included,
+				seller_lat: finalState.seller_lat,
+				seller_lng: finalState.seller_lng,
+				seller_address: finalState.seller_address,
+				notes: document.getElementById('notes').value,
+				items: Object.entries(sessionData.prices).map(([itemId, price]) => ({
+					request_item_id: parseInt(itemId),
+					unit_price: parseFloat(price),
+					photo_url: sessionData.photos[itemId] || null
+				}))
+			};
+
+			try {
+				const res = await fetch('http://localhost:3001/api/seller/offers', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify(payload)
+				});
+
+				if(res.ok) {
+					alert('Teklifiniz başarıyla gönderildi!');
+					sessionStorage.removeItem('current_quote');
+					window.location.href = '/seller/dashboard';
+				}
+			} catch (err) {
+				alert('Gönderim sırasında bir hata oluştu.');
+			} finally {
+				btn.disabled = false;
+				btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-send"><line x1="22" y1="2" x2="11" y2="13"/><polyline points="22 2 15 22 11 13 2 9 22 2"/></svg>Teklifi Gönder';
+			}
+		};
+
+		initMap();
+
+		// Asset Management
+		const assetFile = document.getElementById('asset-file');
+		const assetLinkInput = document.getElementById('asset-link-input');
+		const addLinkBtn = document.getElementById('add-link-btn');
+		const attachedAssetsList = document.getElementById('attached-assets-list');
+		const openLibraryBtn = document.getElementById('open-library-btn');
+		const libraryModal = document.getElementById('library-modal');
+		const closeLibraryBtn = document.getElementById('close-library-btn');
+		const libraryList = document.getElementById('library-list');
+
+		finalState.asset_ids = [];
+
+		assetFile.onchange = async (e) => {
+			const file = e.target.files[0];
+			if(!file) return;
+			const formData = new FormData();
+			formData.append('file', file);
+			try {
+				const res = await fetch('http://localhost:3001/api/upload', {
+					method: 'POST',
+					credentials: 'include',
+					body: formData
+				});
+				const data = await res.json();
+				if(data.success) {
+					finalState.asset_ids.push(data.id);
+					renderAsset(data.id, data.name, 'file');
+				}
+			} catch(err) { alert('Dosya yüklenemedi.'); }
+		};
+
+		addLinkBtn.onclick = async () => {
+			const url = assetLinkInput.value;
+			if(!url) return;
+			try {
+				const res = await fetch('http://localhost:3001/api/user-assets/link', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify({ name: 'Link', url })
+				});
+				const data = await res.json();
+				if(data.success) {
+					finalState.asset_ids.push(data.id);
+					renderAsset(data.id, url, 'link');
+					assetLinkInput.value = '';
+				}
+			} catch(err) { alert('Link eklenemedi.'); }
+		};
+
+		function renderAsset(id, name, type) {
+			const div = document.createElement('div');
+			div.id = `asset-item-${id}`;
+			div.className = 'flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-[10px] font-bold border border-blue-200';
+			div.innerHTML = `
+				<span class="truncate max-w-[120px]">${type === 'file' ? '📄' : '🔗'} ${name}</span>
+				<button onclick="window.removeOfferAsset(${id})" class="hover:text-red-600">
+					<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+				</button>
+			`;
+			attachedAssetsList.appendChild(div);
+		}
+
+		window.removeOfferAsset = (id) => {
+			finalState.asset_ids = finalState.asset_ids.filter(aid => aid !== id);
+			const el = document.getElementById(`asset-item-${id}`);
+			if(el) el.remove();
+		};
+
+		// Library Modal
+		openLibraryBtn.onclick = async () => {
+			libraryList.innerHTML = '<p class="text-center py-8 text-slate-400 font-bold animate-pulse">Yükleniyor...</p>';
+			libraryModal.classList.remove('hidden');
+			try {
+				const res = await fetch('http://localhost:3001/api/user-assets', { credentials: 'include' });
+				const assets = await res.json();
+				libraryList.innerHTML = assets.map(asset => `
+					<div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-blue-300 transition-all group">
+						<div class="flex items-center gap-3 overflow-hidden">
+							<span class="text-xl">${asset.type === 'file' ? '📄' : '🔗'}</span>
+							<div class="overflow-hidden">
+								<p class="text-xs font-bold text-slate-900 truncate">${asset.name}</p>
+								<p class="text-[9px] text-slate-400 font-medium">${new Date(asset.created_at).toLocaleDateString('tr-TR')}</p>
+							</div>
+						</div>
+						<button onclick="window.selectAsset(${asset.id}, '${asset.name.replace(/'/g, "\\'")}', '${asset.type}')" 
+								class="btn-primary h-8 px-4 text-[10px] ${finalState.asset_ids.includes(asset.id) ? 'bg-green-500 hover:bg-green-600' : ''}">
+							${finalState.asset_ids.includes(asset.id) ? 'SEÇİLDİ' : 'SEÇ'}
+						</button>
+					</div>
+				`).join('');
+			} catch(err) { libraryList.innerHTML = '<p class="text-center py-8 text-red-500 font-bold">Yüklenemedi.</p>'; }
+		};
+
+		closeLibraryBtn.onclick = () => libraryModal.classList.add('hidden');
+
+		window.selectAsset = (id, name, type) => {
+			if(finalState.asset_ids.includes(id)) return;
+			finalState.asset_ids.push(id);
+			renderAsset(id, name, type);
+			libraryModal.classList.add('hidden');
+		};
+
+		// Modified Submit to include asset_ids
+		const originalSubmit = document.getElementById('final-submit').onclick;
+		document.getElementById('final-submit').onclick = async () => {
+			if(finalState.shipping_included === null) return alert('Lütfen nakliye durumunu seçin.');
+			
+			const btn = document.getElementById('final-submit');
+			btn.disabled = true;
+			btn.textContent = 'Gönderiliyor...';
+
+			const payload = {
+				request_id: parseInt(id),
+				shipping_included: finalState.shipping_included,
+				seller_lat: finalState.seller_lat,
+				seller_lng: finalState.seller_lng,
+				seller_address: finalState.seller_address,
+				notes: document.getElementById('notes').value,
+				asset_ids: finalState.asset_ids,
+				items: Object.entries(sessionData.prices).map(([itemId, price]) => ({
+					request_item_id: parseInt(itemId),
+					unit_price: parseFloat(price),
+					photo_url: sessionData.photos[itemId] || null
+				}))
+			};
+
+			try {
+				const res = await fetch('http://localhost:3001/api/seller/offers', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify(payload)
+				});
+
+				if(res.ok) {
+					alert('Teklifiniz başarıyla gönderildi!');
+					sessionStorage.removeItem('current_quote');
+					window.location.href = '/seller/dashboard';
+				}
+			} catch (err) {
+				alert('Gönderim sırasında bir hata oluştu.');
+			} finally {
+				btn.disabled = false;
+				btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-send"><line x1="22" y1="2" x2="11" y2="13"/><polyline points="22 2 15 22 11 13 2 9 22 2"/></svg>Teklifi Gönder';
+			}
+		};
+	</script>
+
+	<!-- Library Modal -->
+	<div id="library-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[110] hidden flex items-center justify-center p-4">
+		<div class="glass-card w-full max-w-md p-8 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-200">
+			<div class="flex items-center justify-between mb-6">
+				<h3 class="text-xl font-black text-slate-900 leading-tight">Döküman Kütüphanem</h3>
+				<button id="close-library-btn" class="p-2 text-slate-400 hover:text-slate-600">
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+				</button>
+			</div>
+			<div id="library-list" class="space-y-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+				<!-- Assets -->
+			</div>
+		</div>
+	</div>
+</Layout>

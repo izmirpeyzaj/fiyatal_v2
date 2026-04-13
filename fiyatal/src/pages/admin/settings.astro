@@ -1,0 +1,127 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Settings, Save, Mail, Server, ShieldCheck, User } from 'lucide-astro';
+---
+
+<Layout title="Sistem Ayarları" role="admin">
+	<div class="max-w-4xl mx-auto px-4 py-8">
+		<div class="mb-8">
+			<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Sistem Ayarları</h1>
+			<p class="text-slate-500 font-medium">Platform Genel Ayarları ve SMTP Yapılandırması</p>
+		</div>
+
+		<div class="glass-card p-8 rounded-3xl">
+			<div class="flex items-center gap-3 mb-8 pb-4 border-b border-slate-100">
+				<div class="p-2 bg-blue-50 text-blue-600 rounded-lg">
+					<Mail size={24} />
+				</div>
+				<h2 class="text-xl font-bold text-slate-900">SMTP Yapılandırması</h2>
+			</div>
+
+			<form id="smtp-form" class="space-y-6">
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+					<div>
+						<label class="block text-sm font-bold text-slate-700 mb-2">SMTP Sunucusu</label>
+						<div class="relative">
+							<Server class="absolute left-3 top-3 text-slate-400" size={18} />
+							<input type="text" name="host" id="host" class="input-field pl-10" placeholder="smtp.gmail.com" />
+						</div>
+					</div>
+					<div>
+						<label class="block text-sm font-bold text-slate-700 mb-2">Port</label>
+						<input type="number" name="port" id="port" class="input-field" placeholder="587" />
+					</div>
+				</div>
+
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+					<div>
+						<label class="block text-sm font-bold text-slate-700 mb-2">Kullanıcı Adı (Email)</label>
+						<div class="relative">
+							<User class="absolute left-3 top-3 text-slate-400" size={18} />
+							<input type="text" name="user" id="user" class="input-field pl-10" placeholder="ornek@alanadi.com" />
+						</div>
+					</div>
+					<div>
+						<label class="block text-sm font-bold text-slate-700 mb-2">Şifre</label>
+						<input type="password" name="pass" id="pass" class="input-field" placeholder="••••••••" />
+					</div>
+				</div>
+
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+					<div>
+						<label class="block text-sm font-bold text-slate-700 mb-2">Gönderen Adı</label>
+						<input type="text" name="from_name" id="from_name" class="input-field" placeholder="FiyatAl B2B" />
+					</div>
+					<div>
+						<label class="block text-sm font-bold text-slate-700 mb-2">Gönderen Email</label>
+						<input type="email" name="from_email" id="from_email" class="input-field" placeholder="no-reply@fiyatal.com" />
+					</div>
+				</div>
+
+				<div class="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+					<input type="checkbox" name="secure" id="secure" class="w-5 h-5 accent-blue-600" />
+					<div class="flex items-center gap-2">
+						<ShieldCheck size={18} class="text-slate-500" />
+						<span class="text-sm font-bold text-slate-700">SSL/TLS Güvenli Bağlantı</span>
+					</div>
+				</div>
+
+				<div class="pt-6 border-t border-slate-100 flex justify-end">
+					<button type="submit" class="btn-primary flex items-center gap-2 px-8">
+						<Save size={18} />
+						Ayarları Kaydet
+					</button>
+				</div>
+			</form>
+		</div>
+
+		<div class="mt-8 bg-amber-50 rounded-2xl p-6 border border-amber-100 text-amber-800 flex gap-4">
+			<div class="mt-1"><Settings size={20} /></div>
+			<div class="text-sm leading-relaxed">
+				<strong>Önemli:</strong> SMTP ayarları hatalı olduğunda platform üzerinden bildirim mailleri gönderilemez. Ayarları kaydettikten sonra test maili gönderilmesi önerilir.
+			</div>
+		</div>
+	</div>
+
+	<script is:inline>
+		async function loadConfig() {
+			try {
+				const res = await fetch('http://localhost:3001/api/admin/smtp');
+				const config = await res.json();
+				if (config) {
+					document.getElementById('host').value = config.host || '';
+					document.getElementById('port').value = config.port || '';
+					document.getElementById('user').value = config.user || '';
+					document.getElementById('pass').value = config.pass || '';
+					document.getElementById('from_name').value = config.from_name || '';
+					document.getElementById('from_email').value = config.from_email || '';
+					document.getElementById('secure').checked = config.secure === 1;
+				}
+			} catch (err) {
+				console.error('Config error:', err);
+			}
+		}
+
+		document.getElementById('smtp-form').onsubmit = async (e) => {
+			e.preventDefault();
+			const formData = new FormData(e.target);
+			const body = Object.fromEntries(formData.entries());
+			body.secure = document.getElementById('secure').checked;
+
+			try {
+				const res = await fetch('http://localhost:3001/api/admin/smtp', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(body)
+				});
+				if (res.ok) {
+					alert('Ayarlar başarıyla kaydedildi!');
+				}
+			} catch (err) {
+				alert('Bir hata oluştu.');
+			}
+		};
+
+		loadConfig();
+	</script>
+</Layout>

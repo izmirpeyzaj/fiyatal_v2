@@ -1,0 +1,132 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Search, UserX, UserCheck, Shield, ShoppingBag, Phone, Mail } from 'lucide-astro';
+---
+
+<Layout title="Satıcı Yönetimi" role="admin">
+	<div class="max-w-7xl mx-auto px-4 py-8">
+		<div class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+			<div>
+				<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Satıcı Yönetimi</h1>
+				<p class="text-slate-500 font-medium">Platformdaki tüm satıcı ve tedarikçi hesaplarını yönetin</p>
+			</div>
+			
+			<div class="relative w-full md:w-80">
+				<Search size={18} class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+				<input type="text" id="user-search" class="input-field pl-10" placeholder="Satıcı ara..." />
+			</div>
+		</div>
+
+		<div class="glass-card rounded-2xl overflow-hidden">
+			<table class="w-full text-left text-sm">
+				<thead class="bg-slate-50 text-slate-400 text-[10px] font-bold uppercase tracking-widest border-b border-slate-100">
+					<tr>
+						<th class="px-6 py-4">Satıcı & Şirket</th>
+						<th class="px-6 py-4">İletişim</th>
+						<th class="px-6 py-4">Kayıt</th>
+						<th class="px-6 py-4">Teklif</th>
+						<th class="px-6 py-4">Durum</th>
+						<th class="px-6 py-4">Doğrulama</th>
+						<th class="px-6 py-4 text-right">İşlemler</th>
+					</tr>
+				</thead>
+				<tbody id="users-list" class="divide-y divide-slate-50"></tbody>
+			</table>
+		</div>
+	</div>
+
+	<script is:inline>
+		const list = document.getElementById('users-list');
+		const search = document.getElementById('user-search');
+		let allUsers = [];
+
+		async function loadUsers() {
+			try {
+				const res = await fetch('http://localhost:3001/api/admin/users?role=seller', { credentials: 'include' });
+				allUsers = await res.json();
+				renderUsers(allUsers);
+			} catch (err) { console.error(err); }
+		}
+
+		function renderUsers(users) {
+			list.innerHTML = users.map(u => `
+				<tr class="hover:bg-slate-50 transition-colors">
+					<td class="px-6 py-4">
+						<div class="flex items-center gap-3">
+							<div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+								<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shopping-bag"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+							</div>
+							<div>
+								<div class="flex items-center gap-1.5">
+									<p class="font-bold text-slate-900">${u.name}</p>
+									${u.is_verified ? '<span class="text-blue-500" title="Doğrulanmış Satıcı"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-check"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg></span>' : ''}
+								</div>
+								<p class="text-xs text-slate-500 font-medium">${u.company_name}</p>
+							</div>
+						</div>
+					</td>
+					<td class="px-6 py-4">
+						<p class="text-xs text-slate-600 flex items-center gap-1 font-medium"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mail"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> ${u.email}</p>
+						<p class="text-xs text-slate-400 mt-1 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-phone"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l2.28-2.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> ${u.phone}</p>
+					</td>
+					<td class="px-6 py-4 text-slate-500 font-medium">
+						${new Date(u.created_at).toLocaleDateString('tr-TR')}
+					</td>
+					<td class="px-6 py-4">
+						<span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">${u.offer_count} Teklif</span>
+					</td>
+					<td class="px-6 py-4">
+						</span>
+					</td>
+					<td class="px-6 py-4">
+						<button onclick="toggleVerify(${u.id}, ${!u.is_verified})" class="px-2 py-0.5 rounded-full text-[10px] font-black tracking-widest transition-all ${u.is_verified ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-100 text-slate-400 hover:bg-blue-50 hover:text-blue-600'}">
+							${u.is_verified ? 'DOĞRULANMIŞ' : 'TIKLA DOĞRULA'}
+						</button>
+					</td>
+					<td class="px-6 py-4 text-right">
+						<button onclick="toggleStatus(${u.id}, '${u.status === 'active' ? 'blocked' : 'active'}')" class="p-2 transition-colors ${u.status === 'active' ? 'text-slate-400 hover:text-red-600' : 'text-green-600 hover:text-green-800'}" title="${u.status === 'active' ? 'Bloke Et' : 'Aktifleştir'}">
+							${u.status === 'active' ? '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-x"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="8" x2="22" y2="13"/><line x1="22" y1="8" x2="17" y2="13"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-check"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>'}
+						</button>
+					</td>
+				</tr>
+			`).join('');
+		}
+
+		async function toggleVerify(id, is_verified) {
+			try {
+				await fetch(`http://localhost:3001/api/admin/users/${id}/verify`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify({ is_verified })
+				});
+				loadUsers();
+			} catch (err) { alert('Doğrulama işlemi başarısız.'); }
+		}
+
+		async function toggleStatus(id, status) {
+			if (!confirm('Satıcı durumunu değiştirmek istediğinize emin misiniz?')) return;
+			try {
+				await fetch(`http://localhost:3001/api/admin/users/${id}/status`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify({ status })
+				});
+				loadUsers();
+			} catch (err) { alert('İşlem başarısız.'); }
+		}
+
+		search.oninput = () => {
+			const val = search.value.toLowerCase();
+			const filtered = allUsers.filter(u => 
+				u.name.toLowerCase().includes(val) || 
+				u.email.toLowerCase().includes(val) || 
+				u.company_name.toLowerCase().includes(val)
+			);
+			renderUsers(filtered);
+		};
+
+		loadUsers();
+	</script>
+</Layout>

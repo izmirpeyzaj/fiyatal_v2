@@ -1,0 +1,161 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { ShoppingBag, ChevronRight, Camera, MapPin, Clock, Folder, Star, ShieldCheck } from 'lucide-astro';
+---
+
+<Layout title="Satıcı Paneli" role="seller">
+	<div class="max-w-xl mx-auto px-4 py-8 pb-24">
+		<div class="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+			<div>
+				<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Yeni Talepler</h1>
+				<p class="text-slate-500 font-medium">Bölgenizdeki açık talepleri inceleyip fiyat verin</p>
+			</div>
+			<div class="flex flex-col gap-2">
+				<div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+					<a href="/seller/library" class="btn-secondary h-11 px-6 flex items-center gap-2 font-bold bg-blue-50 text-blue-700 border-blue-100/50 hover:bg-blue-100 transition-all">
+						<Folder size={18} />
+						Döküman Kütüphanem
+					</a>
+					<a href="/seller/projects" class="btn-secondary h-11 px-6 flex items-center gap-2 font-bold">
+						<ShoppingBag size={18} />
+						İlgilendiğim Projeler
+					</a>
+				</div>
+				<div id="seller-profile-stats" class="hidden glass-card px-4 py-2 rounded-xl flex items-center gap-4 bg-white/50 border-white/40">
+					<div class="flex items-center gap-1.5 text-yellow-600 font-black text-xs">
+						<Star size={14} class="fill-yellow-500" />
+						<span id="avg-rating">-.--</span>
+					</div>
+					<div id="verified-pill" class="hidden flex items-center gap-1 px-2 py-0.5 bg-blue-600 text-white text-[9px] font-black rounded-full uppercase tracking-tighter">
+						<ShieldCheck size={10} /> DOĞRULANMIŞ
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="mb-8">
+			<input type="text" id="seller-search" class="input-field pl-4 h-11" placeholder="Talep veya şirket ara..." />
+		</div>
+
+		<div id="requests-container" class="space-y-4">
+			<!-- Skeleton -->
+			<div class="glass-card p-5 rounded-2xl animate-pulse h-40 bg-slate-100"></div>
+			<div class="glass-card p-5 rounded-2xl animate-pulse h-40 bg-slate-100"></div>
+		</div>
+
+		<div id="empty-state" class="hidden flex flex-col items-center justify-center py-20 text-center">
+			<ShoppingBag size={48} class="text-slate-300 mb-4" />
+			<h3 class="text-xl font-bold text-slate-900">Açık talep bulunamadı</h3>
+			<p class="text-slate-400 mt-2">Daha sonra tekrar kontrol edin.</p>
+		</div>
+	</div>
+
+	<script is:inline>
+		const container = document.getElementById('requests-container');
+		const emptyState = document.getElementById('empty-state');
+
+		async function loadRequests() {
+			try {
+				const res = await fetch('http://localhost:3001/api/seller/requests', { credentials: 'include' });
+				const requests = await res.json();
+
+				if (requests.length === 0) {
+					container.classList.add('hidden');
+					emptyState.classList.remove('hidden');
+					return;
+				}
+
+				container.innerHTML = requests.map(req => `
+					<div class="glass-card p-5 rounded-2xl transition-all duration-300 hover:shadow-2xl border-l-4 border-l-blue-600">
+						<div class="flex justify-between items-start mb-2">
+							<h3 class="text-lg font-bold text-slate-900 leading-tight">${req.title}</h3>
+							<span class="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-1 rounded italic">
+								${req.buyer_company}
+							</span>
+						</div>
+						
+						<div class="flex flex-wrap gap-2 mb-4">
+							${req.photo_required ? '<span class="text-[10px] bg-orange-100 text-orange-600 font-bold px-2 py-0.5 rounded flex items-center gap-1"><Camera size={10} /> FOTO ZORUNLU</span>' : ''}
+							${req.location_required ? '<span class="text-[10px] bg-sky-100 text-sky-600 font-bold px-2 py-0.5 rounded flex items-center gap-1"><MapPin size={10} /> KONUM ZORUNLU</span>' : ''}
+						</div>
+
+						<div class="flex justify-between items-center mt-6">
+							<div class="flex flex-col gap-1">
+								<div class="text-[10px] text-slate-400 flex items-center gap-1">
+									<Clock size={12} />
+									${new Date(req.created_at).toLocaleDateString('tr-TR')}
+								</div>
+								${req.expires_at ? `
+									<div class="countdown-timer text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 mt-1" data-expires="${req.expires_at}">
+										Yükleniyor...
+									</div>
+								` : ''}
+							</div>
+							<a href="/seller/request/${req.id}" class="btn-primary py-2 px-6 flex items-center gap-2 text-sm">
+								Fiyat Ver <ChevronRight size={16} />
+							</a>
+						</div>
+					</div>
+				`).join('');
+			} catch (err) {
+				console.error('Hata:', err);
+			}
+		}
+
+		async function loadProfile() {
+			try {
+				// We need current user id, usually available in user session or we fetch from separate profile endpoint
+				// For now, let's assume Satıcı can see their own stats if we had a /api/seller/profile
+				// But since we have /api/seller/:id/rating, we'll need the ID.
+				// In a real app, we'd get this from the session token.
+				const res = await fetch('http://localhost:3001/api/users/profile', { credentials: 'include' }); // Fixed endpoint
+				const user = await res.json();
+				
+				if (user.is_verified) {
+					document.getElementById('verified-pill').classList.remove('hidden');
+				}
+				
+				const ratingRes = await fetch(`http://localhost:3001/api/seller/${user.id}/rating`, { credentials: 'include' });
+				const ratingData = await ratingRes.json();
+				if (ratingData && ratingData.average) {
+					document.getElementById('avg-rating').textContent = ratingData.average.toFixed(1);
+				}
+				document.getElementById('seller-profile-stats').classList.remove('hidden');
+			} catch (err) {}
+		}
+
+		function startCountdown() {
+			setInterval(() => {
+				const timers = document.querySelectorAll('.countdown-timer');
+				timers.forEach(timer => {
+					const expiryStr = timer.getAttribute('data-expires');
+					if (!expiryStr) return;
+
+					const expiry = new Date(expiryStr).getTime();
+					const now = new Date().getTime();
+					const diff = expiry - now;
+
+					if (diff <= 0) {
+						timer.innerHTML = '<span class="text-red-600">SÜRE DOLDU</span>';
+						return;
+					}
+
+					const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+					const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+					const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+					const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+					timer.textContent = `${days}g ${hours}s ${minutes}d ${seconds}sn`;
+					
+					if (diff < 24 * 60 * 60 * 1000) {
+						timer.classList.add('bg-red-50', 'text-red-600', 'border-red-100');
+						timer.classList.remove('bg-slate-100', 'text-slate-600');
+					}
+				});
+			}, 1000);
+		}
+
+		loadProfile();
+		loadRequests().then(startCountdown);
+	</script>
+</Layout>

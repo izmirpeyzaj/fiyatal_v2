@@ -1,0 +1,119 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { History, Search, Filter, ChevronRight, Clock, CheckCircle, XCircle } from 'lucide-astro';
+---
+
+<Layout title="Geçmiş Tekliflerim" role="seller">
+	<div class="max-w-xl mx-auto px-4 py-8 pb-32">
+		<div class="mb-8 border-b border-slate-200 pb-4">
+			<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Tekliflerim</h1>
+			<p class="text-slate-500 font-medium">Geçmişte verdiğiniz tüm tekliflerin durumu</p>
+		</div>
+
+		<!-- Filters -->
+		<div class="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
+			{['Tümü', 'Beklemede', 'Kabul Edildi', 'Reddedildi'].map((label, i) => (
+				<button class={`filter-btn px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap border transition-all ${i === 0 ? 'bg-blue-600 border-blue-600 text-white shadow-lg' : 'bg-white border-slate-200 text-slate-500'}`} data-status={label.toLowerCase()}>
+					{label}
+				</button>
+			))}
+		</div>
+
+		<div id="history-container" class="space-y-4 pt-4">
+			<!-- Skeleton -->
+			<div class="glass-card p-5 rounded-3xl animate-pulse h-32 bg-slate-100"></div>
+			<div class="glass-card p-5 rounded-3xl animate-pulse h-32 bg-slate-100"></div>
+		</div>
+
+		<div id="empty-state" class="hidden flex flex-col items-center justify-center py-20 text-center">
+			<History size={48} class="text-slate-200 mb-4" />
+			<h3 class="text-xl font-bold text-slate-900">Henüz teklifiniz yok</h3>
+			<p class="text-slate-400 mt-2">Taleplere fiyat vererek başlayın.</p>
+		</div>
+	</div>
+
+	<script is:inline>
+		const container = document.getElementById('history-container');
+		const emptyState = document.getElementById('empty-state');
+		const filterBtns = document.querySelectorAll('.filter-btn');
+
+		async function loadHistory(statusFilter = 'tümü') {
+			try {
+				// For the sake of demonstration, we'll fetch all and filter client-side 
+				// since I haven't added specific seller-history endpoint to backend yet
+				// I will use a general proxy if needed, but normally we'd have /api/seller/offers
+				const res = await fetch('http://localhost:3001/api/seller/offers', { credentials: 'include' }); 
+				const offers = await res.json();
+				
+				if (offers.length === 0) {
+					container.classList.add('hidden');
+					emptyState.classList.remove('hidden');
+					return;
+				}
+
+				const filtered = statusFilter === 'tümü' ? offers : offers.filter(o => {
+					if(statusFilter === 'beklemede') return o.status === 'pending';
+					if(statusFilter === 'kabul edildi') return o.status === 'accepted';
+					if(statusFilter === 'reddedildi') return o.status === 'rejected';
+					return true;
+				});
+
+				container.innerHTML = filtered.map(o => `
+					<div class="glass-card p-5 rounded-3xl group hover:shadow-xl transition-all">
+						<div class="flex justify-between items-start mb-4">
+							<span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${getStatusClass(o.status)}">
+								${getStatusText(o.status)}
+							</span>
+							<p class="text-[10px] text-slate-400 font-bold flex items-center gap-1">
+								<Clock size={12} />
+								${new Date(o.submitted_at).toLocaleDateString('tr-TR')}
+							</p>
+						</div>
+						
+						<h3 class="text-lg font-bold text-slate-900 mb-4 line-clamp-1">Talep #${o.request_id}</h3>
+						
+						<div class="flex items-center justify-between">
+							<div class="flex items-center gap-1 text-slate-400 font-bold text-xs">
+								<Truck size={12} />
+								Nakliye: ${o.shipping_included ? 'Dahil' : 'Hariç'}
+							</div>
+							<a href="/seller/offers/${o.id}" class="text-blue-600 font-bold text-sm flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+								Detay <ChevronRight size={16} />
+							</a>
+						</div>
+					</div>
+				`).join('');
+
+				if(filtered.length === 0) {
+					container.innerHTML = '<p class="text-center text-slate-400 py-10 font-bold">Bu kategoride teklif bulunamadı.</p>';
+				}
+			} catch (err) { console.error(err); }
+		}
+
+		function getStatusClass(status) {
+			if(status === 'accepted') return 'bg-green-100 text-green-700';
+			if(status === 'rejected') return 'bg-red-100 text-red-700';
+			return 'bg-yellow-100 text-yellow-700';
+		}
+
+		function getStatusText(status) {
+			if(status === 'accepted') return 'KABUL EDİLDİ';
+			if(status === 'rejected') return 'REDDEDİLDİ';
+			return 'BEKLEMEDE';
+		}
+
+		filterBtns.forEach(btn => {
+			btn.onclick = () => {
+				filterBtns.forEach(b => {
+					b.classList.remove('bg-blue-600', 'border-blue-600', 'text-white', 'shadow-lg');
+					b.classList.add('bg-white', 'border-slate-200', 'text-slate-500');
+				});
+				btn.classList.add('bg-blue-600', 'border-blue-600', 'text-white', 'shadow-lg');
+				btn.classList.remove('bg-white', 'border-slate-200', 'text-slate-500');
+				loadHistory(btn.dataset.status);
+			};
+		});
+
+		loadHistory();
+	</script>
+</Layout>

@@ -1,0 +1,123 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { ShoppingBag, Users, Zap, ShieldCheck, ChevronRight, Phone, MapPin } from 'lucide-astro';
+---
+
+<Layout title="B2B Fiyat Teklif Platformu">
+	<!-- Hero Section -->
+	<section class="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-slate-50">
+		<div class="absolute inset-0 z-0">
+			<div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-400/10 blur-[120px] rounded-full"></div>
+			<div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full"></div>
+		</div>
+
+		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+			<div class="inline-flex items-center gap-2 bg-white/80 backdrop-blur-md px-4 py-2 rounded-full border border-blue-100 mb-8 shadow-sm">
+				<span class="flex h-2 w-2 rounded-full bg-blue-600 animate-ping"></span>
+				<span class="text-xs font-black text-blue-900 uppercase tracking-widest">Yeni Nesil B2B Platformu</span>
+			</div>
+			<h1 class="text-5xl md:text-7xl font-black text-slate-900 tracking-tight mb-6 leading-tight">
+				Malzeme Tedariğinde <br/>
+				<span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-400">En İyi Fiyatı Alın</span>
+			</h1>
+			<p class="text-xl text-slate-500 max-w-2xl mx-auto mb-10 font-medium">
+				Alıcılarla satıcıları saniyeler içinde buluşturan, Excel entegrasyonlu ve mobil öncelikli fiyat toplama platformu.
+			</p>
+
+			<div class="flex flex-col sm:flex-row gap-4 justify-center">
+				<a href="/login" class="btn-primary h-14 px-8 text-lg font-bold flex items-center justify-center gap-2 shadow-2xl shadow-blue-500/30">
+					Hemen Başla
+					<ChevronRight size={20} />
+				</a>
+				<a href="#features" class="btn-secondary h-14 px-8 text-lg font-bold flex items-center justify-center gap-2 bg-white border-2 border-slate-100 hover:border-blue-200">
+					Nasıl Çalışır?
+				</a>
+			</div>
+
+			<!-- Mock Dashboard Preview -->
+			<div class="mt-20 relative max-w-5xl mx-auto group">
+				<div class="absolute inset-0 bg-blue-600/5 blur-[100px] rounded-full group-hover:bg-blue-600/10 transition-colors"></div>
+				<div class="glass-card rounded-[40px] p-4 md:p-8 relative overflow-hidden border-white/40 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)]">
+					<div class="bg-white/90 rounded-[32px] overflow-hidden shadow-sm aspect-video flex">
+						<div class="w-64 bg-slate-50 border-r border-slate-100 p-6 hidden md:block">
+							<div class="w-12 h-12 bg-blue-600 rounded-2xl mb-8"></div>
+							<div class="space-y-4">
+								<div class="h-2 w-full bg-slate-200 rounded-full"></div>
+								<div class="h-2 w-3/4 bg-slate-200 rounded-full"></div>
+								<div class="h-2 w-1/2 bg-slate-200 rounded-full"></div>
+							</div>
+						</div>
+						<div class="flex-grow relative bg-slate-100">
+							<img src="/fiyatal_hero_v3_webp_1775712727521.png" alt="FiyatAl B2B Platformu" class="w-full h-full object-cover opacity-90" />
+							<div class="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- Features Section -->
+	<section id="features" class="py-24 bg-white relative">
+		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+			<div class="text-center mb-16">
+				<h2 class="text-3xl font-black text-slate-900 tracking-tight uppercase tracking-widest text-xs text-blue-600 mb-4">Ayrıcalıklar</h2>
+				<p class="text-4xl font-extrabold text-slate-900">Neden FiyatAl?</p>
+			</div>
+
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+				<div class="p-8 rounded-[32px] bg-slate-50 border border-slate-100 hover:shadow-xl transition-all">
+					<div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+						<Zap size={32} />
+					</div>
+					<h3 class="text-xl font-bold text-slate-900 mb-4">Hızlı Teklif</h3>
+					<p class="text-slate-500 font-medium">Excel listelerinizi saniyeler içinde yükleyin, onlarca satıcıdan aynı anda teklif toplayın.</p>
+				</div>
+				<div class="p-8 rounded-[32px] bg-slate-50 border border-slate-100 hover:shadow-xl transition-all">
+					<div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+						<ShieldCheck size={32} />
+					</div>
+					<h3 class="text-xl font-bold text-slate-900 mb-4">Doğrulanmış Satıcılar</h3>
+					<p class="text-slate-500 font-medium">Sistemimizdeki tüm satıcılar doğrulanmış kurumsal firmalardan oluşur, güvenle ticaret yapın.</p>
+				</div>
+				<div class="p-8 rounded-[32px] bg-slate-50 border border-slate-100 hover:shadow-xl transition-all">
+					<div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+						<ShoppingBag size={32} />
+					</div>
+					<h3 class="text-xl font-bold text-slate-900 mb-4">Şeffaf Kıyaslama</h3>
+					<p class="text-slate-500 font-medium">Gelen teklifleri birim fiyat ve toplam maliyet bazında yan yana görün, en doğru kararı verin.</p>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- Contact / Footer Info -->
+	<section class="py-16 bg-slate-900 text-white overflow-hidden relative">
+		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-8 relative z-10">
+			<div>
+				<h2 class="text-2xl font-black mb-2">FiyatAl B2B Çözümleri</h2>
+				<p class="text-slate-400 font-medium">Profesyonel tedarik yönetimi için her zaman yanınızdayız.</p>
+			</div>
+			<div class="flex flex-wrap gap-8 justify-center">
+				<div class="flex items-center gap-3">
+					<div class="p-3 bg-blue-500/20 rounded-xl text-blue-400">
+						<Phone size={24} />
+					</div>
+					<div>
+						<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Bize Ulaşın</p>
+						<p class="font-bold">0532 655 07 84</p>
+					</div>
+				</div>
+				<div class="flex items-center gap-3">
+					<div class="p-3 bg-blue-500/20 rounded-xl text-blue-400">
+						<MapPin size={24} />
+					</div>
+					<div>
+						<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Merkez</p>
+						<p class="font-bold">0232 388 23 45</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+</Layout>

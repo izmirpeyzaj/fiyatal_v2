@@ -1,0 +1,94 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { User, Building2, Mail, Phone, Shield, Camera } from 'lucide-astro';
+
+const { role } = Astro.params;
+---
+
+<Layout title="Profilim" role={role as any}>
+	<div class="max-w-xl mx-auto px-4 py-8 pb-32">
+		<div class="text-center mb-10">
+			<div class="relative inline-block group">
+				<div class="w-32 h-32 rounded-3xl bg-blue-600 text-white flex items-center justify-center mx-auto shadow-2xl shadow-blue-500/30 mb-4 transition-transform group-hover:scale-105">
+					<User size={64} />
+				</div>
+				<button class="absolute bottom-2 right-2 p-2 bg-white rounded-xl shadow-lg border border-slate-100 text-blue-600 hover:bg-blue-50 transition-colors">
+					<Camera size={20} />
+				</button>
+			</div>
+			<h1 id="p-name" class="text-3xl font-black text-slate-900 tracking-tight"></h1>
+			<p id="p-role" class="text-slate-400 font-bold uppercase tracking-widest text-xs mt-1"></p>
+		</div>
+
+		<div class="space-y-6">
+			<!-- Company Info -->
+			<div class="glass-card p-6 rounded-3xl">
+				<h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+					<Building2 size={16} />
+					Kurumsal Bilgiler
+				</h2>
+				<div class="space-y-4">
+					<div>
+						<label class="text-[10px] font-black text-slate-400 uppercase tracking-tight">Şirket Adı</label>
+						<p id="p-company" class="font-bold text-slate-900 border-b border-slate-100 pb-2"></p>
+					</div>
+					<div class="grid grid-cols-2 gap-4">
+						<div>
+							<label class="text-[10px] font-black text-slate-400 uppercase tracking-tight">E-Posta</label>
+							<p id="p-email" class="font-bold text-slate-900 border-b border-slate-100 pb-2 truncate"></p>
+						</div>
+						<div>
+							<label class="text-[10px] font-black text-slate-400 uppercase tracking-tight">Telefon</label>
+							<p id="p-phone" class="font-bold text-slate-900 border-b border-slate-100 pb-2"></p>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Account Stats/Status -->
+			<div class="glass-card p-6 rounded-3xl bg-slate-900 text-white">
+				<div class="flex items-center justify-between">
+					<div class="flex items-center gap-3">
+						<div class="p-2 bg-blue-500/20 rounded-xl text-blue-400">
+							<Shield size={20} />
+						</div>
+						<div>
+							<p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Hesap Durumu</p>
+							<p id="p-status" class="font-black"></p>
+						</div>
+					</div>
+					<button class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-bold transition-all">
+						Şifre Değiştir
+					</button>
+				</div>
+			</div>
+
+			<button id="logout-btn-profile" class="w-full btn-secondary text-red-600 hover:bg-red-50 py-4 flex items-center justify-center gap-2 rounded-2xl">
+				Oturumu Kapat
+			</button>
+		</div>
+	</div>
+
+	<script is:inline>
+		async function loadProfile() {
+			try {
+				const res = await fetch('http://localhost:3001/api/users/profile');
+				const user = await res.json();
+
+				document.getElementById('p-name').textContent = user.name;
+				document.getElementById('p-role').textContent = user.role === 'buyer' ? 'Alıcı Hesabı' : (user.role === 'seller' ? 'Satıcı Hesabı' : 'Yönetici');
+				document.getElementById('p-company').textContent = user.company_name;
+				document.getElementById('p-email').textContent = user.email;
+				document.getElementById('p-phone').textContent = user.phone;
+				document.getElementById('p-status').textContent = user.status === 'active' ? 'Doğrulanmış Hesap' : 'Kısıtlı Hesap';
+				
+				document.getElementById('logout-btn-profile').onclick = async () => {
+					await fetch('http://localhost:3001/api/auth/logout', { method: 'POST' });
+					window.location.href = '/login';
+				};
+			} catch (err) { console.error(err); }
+		}
+
+		loadProfile();
+	</script>
+</Layout>

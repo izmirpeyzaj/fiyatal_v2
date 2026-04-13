@@ -1,0 +1,64 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { User, Shield, Mail, Phone, Camera } from 'lucide-astro';
+---
+
+<Layout title="Yönetici Profili" role="admin">
+	<div class="max-w-xl mx-auto px-4 py-8 pb-32">
+		<div class="text-center mb-10">
+			<div class="relative inline-block group">
+				<div class="w-32 h-32 rounded-3xl bg-slate-900 text-white flex items-center justify-center mx-auto shadow-2xl shadow-slate-500/30 mb-4 transition-transform group-hover:scale-105">
+					<User size={64} />
+				</div>
+				<button class="absolute bottom-2 right-2 p-2 bg-white rounded-xl shadow-lg border border-slate-100 text-slate-900 hover:bg-slate-50 transition-colors">
+					<Camera size={20} />
+				</button>
+			</div>
+			<h1 id="p-name" class="text-3xl font-black text-slate-900 tracking-tight"></h1>
+			<p class="text-red-500 font-bold uppercase tracking-widest text-xs mt-1">Sistem Yöneticisi</p>
+		</div>
+
+		<div class="space-y-6">
+			<div class="glass-card p-6 rounded-3xl">
+				<h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+					<Shield size={16} />
+					Yönetici Bilgileri
+				</h2>
+				<div class="space-y-4">
+					<div>
+						<label class="text-[10px] font-black text-slate-400 uppercase tracking-tight">Tam İsim</label>
+						<p id="p-full-name" class="font-bold text-slate-900 border-b border-slate-100 pb-2"></p>
+					</div>
+					<div>
+						<label class="text-[10px] font-black text-slate-400 uppercase tracking-tight">E-Posta</label>
+						<p id="p-email" class="font-bold text-slate-900 border-b border-slate-100 pb-2"></p>
+					</div>
+				</div>
+			</div>
+
+			<button id="logout-btn-profile" class="w-full btn-secondary text-red-600 hover:bg-red-50 py-4 flex items-center justify-center gap-2 rounded-2xl">
+				Oturumu Kapat
+			</button>
+		</div>
+	</div>
+
+	<script is:inline>
+		async function loadProfile() {
+			try {
+				const res = await fetch('http://localhost:3001/api/users/profile');
+				const user = await res.json();
+
+				document.getElementById('p-name').textContent = user.name;
+				document.getElementById('p-full-name').textContent = user.name;
+				document.getElementById('p-email').textContent = user.email;
+				
+				document.getElementById('logout-btn-profile').onclick = async () => {
+					await fetch('http://localhost:3001/api/auth/logout', { method: 'POST' });
+					window.location.href = '/login';
+				};
+			} catch (err) { console.error(err); }
+		}
+
+		loadProfile();
+	</script>
+</Layout>

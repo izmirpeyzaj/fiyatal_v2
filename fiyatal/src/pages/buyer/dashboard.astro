@@ -1,0 +1,148 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Plus, Clock, ShoppingBag, MessageSquare, ChevronRight } from 'lucide-astro';
+---
+
+<Layout title="Alıcı Paneli" role="buyer">
+	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+		<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+			<div>
+				<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Taleplerim</h1>
+				<p class="text-slate-500 font-medium">Satıcılardan gelen teklifleri buradan takip edebilirsiniz</p>
+			</div>
+			<div class="flex gap-3 w-full sm:w-auto">
+				<a href="/buyer/projects" class="btn-secondary flex items-center gap-2">
+					<ShoppingBag size={18} />
+					Projelerimi Gör
+				</a>
+				<a href="/buyer/new-request" class="btn-primary flex items-center gap-2">
+					<Plus size={20} />
+					Yeni Talep Oluştur
+				</a>
+			</div>
+		</div>
+
+		<div class="flex flex-col md:flex-row gap-4 mb-8">
+			<div class="relative flex-grow">
+				<input type="text" id="buyer-search" class="input-field pl-4" placeholder="Talep başlığı ile ara..." />
+			</div>
+			<div class="w-full md:w-48">
+				<select id="buyer-status-filter" class="input-field">
+					<option value="all">Tüm Durumlar</option>
+					<option value="active">Aktif</option>
+					<option value="closed">Kapalı</option>
+				</select>
+			</div>
+		</div>
+
+		<div id="requests-list" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+			<!-- Loading skeleton -->
+			<div class="glass-card p-6 rounded-2xl animate-pulse h-48 bg-slate-100"></div>
+			<div class="glass-card p-6 rounded-2xl animate-pulse h-48 bg-slate-100"></div>
+		</div>
+
+		<div id="empty-state" class="hidden flex flex-col items-center justify-center py-20 text-center">
+			<div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+				<ShoppingBag size={40} class="text-slate-400" />
+			</div>
+			<h3 class="text-xl font-bold text-slate-900">Henüz talep oluşturmadınız</h3>
+			<p class="text-slate-500 max-w-sm mt-2">İlk talebinizi oluşturmak için sağ üstteki butonu kullanın.</p>
+		</div>
+	</div>
+
+	<script is:inline>
+		const listContainer = document.getElementById('requests-list');
+		const emptyState = document.getElementById('empty-state');
+
+		async function loadRequests() {
+			try {
+				const res = await fetch('http://localhost:3001/api/buyer/requests', { credentials: 'include' });
+				const requests = await res.json();
+
+				if (requests.length === 0) {
+					listContainer.classList.add('hidden');
+					emptyState.classList.remove('hidden');
+					return;
+				}
+
+				listContainer.innerHTML = requests.map(req => `
+					<div class="glass-card p-6 rounded-2xl group hover:shadow-2xl hover:border-blue-200 transition-all duration-300">
+						<div class="flex justify-between items-start mb-4">
+							<span class="px-3 py-1 rounded-full text-xs font-bold ${req.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}">
+								${req.status === 'active' ? 'AKTİF' : 'KAPALI'}
+							</span>
+							<div class="flex flex-col items-end gap-1">
+								<div class="flex items-center gap-1 text-slate-400 text-[10px] font-medium">
+									<Clock size={12} />
+									${new Date(req.created_at).toLocaleDateString('tr-TR')}
+								</div>
+								${req.expires_at ? `
+									<div class="countdown-timer text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 mt-1" data-expires="${req.expires_at}">
+										Yükleniyor...
+									</div>
+								` : ''}
+							</div>
+						</div>
+						
+						<h2 class="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors mb-4">${req.title}</h2>
+						
+						<div class="grid grid-cols-2 gap-4 mb-6">
+							<div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+								<p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Ürün Sayısı</p>
+								<p class="text-xl font-extrabold text-slate-900">${req.item_count}</p>
+							</div>
+							<div class="bg-blue-50 p-3 rounded-xl border border-blue-100">
+								<p class="text-[10px] text-blue-500 font-bold uppercase tracking-wider mb-1">Gelen Teklif</p>
+								<p class="text-xl font-extrabold text-blue-600">${req.offer_count}</p>
+							</div>
+						</div>
+
+						<div class="flex items-center gap-3">
+							<a href="/buyer/requests/${req.id}/offers" class="flex-grow btn-primary flex items-center justify-center gap-2">
+								<MessageSquare size={18} />
+								Teklifleri Gör
+							</a>
+							<button onclick="closeRequest(${req.id})" class="p-2 text-slate-400 hover:text-red-600 transition-colors" title="Talebi Kapat">
+								<X size={20} />
+							</button>
+						</div>
+					</div>
+				`).join('');
+			} catch (err) {
+				console.error('Talepler yüklenemedi:', err);
+			}
+		}
+
+		loadRequests().then(startCountdown);
+
+		function startCountdown() {
+			setInterval(() => {
+				const timers = document.querySelectorAll('.countdown-timer');
+				timers.forEach(timer => {
+					const expiry = new Date(timer.getAttribute('data-expires')).getTime();
+					const now = new Date().getTime();
+					const diff = expiry - now;
+
+					if (diff <= 0) {
+						timer.innerHTML = '<span class="text-red-600">SÜRE DOLDU</span>';
+						return;
+					}
+
+					const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+					const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+					const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+					const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+					timer.textContent = `${days}g ${hours}s ${minutes}d ${seconds}sn`;
+					
+					if (diff < 24 * 60 * 60 * 1000) {
+						timer.classList.add('bg-red-50', 'text-red-600', 'border-red-100');
+						timer.classList.remove('bg-slate-100', 'text-slate-600');
+					}
+				});
+			}, 1000);
+		}
+
+		loadRequests().then(startCountdown);
+	</script>
+</Layout>

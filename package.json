@@ -1,0 +1,15 @@
+{
+  "name": "fiyatal-monorepo",
+  "version": "1.0.0",
+  "description": "FiyatAl B2B Platform - Frontend & Backend",
+  "private": true,
+  "scripts": {
+    "frontend": "cd fiyatal && npm install && npm run dev",
+    "backend": "cd backend && npm install && npm run dev",
+    "dev": "npm run frontend & npm run backend",
+    "install:all": "cd fiyatal && npm install && cd ../backend && npm install"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

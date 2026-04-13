@@ -1,0 +1,559 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Upload, MapPin, CheckCircle, ChevronLeft, ChevronRight, FileSpreadsheet, Locate } from 'lucide-astro';
+---
+
+<Layout title="Yeni Talep Oluştur" role="buyer">
+	<div class="max-w-4xl mx-auto px-4 py-8">
+		<!-- Stepper -->
+		<div class="flex items-center justify-between mb-12 px-4">
+			{[1, 2, 3].map((step) => (
+				<div class="flex items-center flex-1 last:flex-none">
+					<div id={`step-circle-${step}`} class={`w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 transition-all duration-300 ${step === 1 ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-white border-slate-200 text-slate-400'}`}>
+						{step}
+					</div>
+					{step < 3 && <div id={`step-line-${step}`} class="flex-grow h-0.5 bg-slate-200 mx-4 transition-all duration-300"></div>}
+				</div>
+			))}
+		</div>
+
+		<div class="glass-card p-8 rounded-3xl min-h-[500px] flex flex-col">
+			<!-- Step 1: Excel Upload -->
+			<div id="step-1" class="step-content space-y-6">
+				<div class="text-center mb-8">
+					<h2 class="text-2xl font-extrabold text-slate-900">1. Ürün Listesi</h2>
+					<p class="text-slate-500">Excel dosyanızı yükleyerek ürün listesini oluşturun</p>
+				</div>
+
+				<div>
+					<label class="block text-sm font-semibold text-slate-700 mb-2">Talep Başlığı</label>
+					<input type="text" id="req-title" class="input-field h-12" placeholder="Örn: 2026 İnşaat Malzemeleri Alımı" />
+				</div>
+
+				<div class="space-y-4">
+					<div class="flex items-center justify-between">
+						<label class="block text-sm font-semibold text-slate-700">Ürün Listesi</label>
+						<div class="flex gap-2">
+							<button id="btn-show-excel" class="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-wider border border-blue-100 hover:bg-blue-100 transition-all">Excel Yükle</button>
+							<button id="btn-show-manual" class="px-3 py-1.5 rounded-lg bg-slate-50 text-slate-500 text-[10px] font-black uppercase tracking-wider border border-slate-100 hover:bg-slate-100 transition-all">Manuel Ekle</button>
+						</div>
+					</div>
+
+					<!-- Excel Upload Area -->
+					<div id="excel-area" class="relative">
+						<input type="file" id="excel-input" accept=".xlsx" class="hidden" />
+						<label for="excel-input" class="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-slate-200 rounded-2xl hover:border-blue-400 hover:bg-blue-50/50 cursor-pointer transition-all group">
+							<div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+								<Upload size={32} class="text-blue-600" />
+							</div>
+							<span class="text-slate-900 font-bold" id="file-name">Excel Dosyası Seçin veya Sürükleyin</span>
+							<span class="text-slate-400 text-xs mt-1">.xlsx formatında dosya</span>
+						</label>
+					</div>
+
+					<!-- Manual Entry Area -->
+					<div id="manual-area" class="hidden space-y-4">
+						<div class="grid grid-cols-12 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+							<div class="col-span-12 md:col-span-6">
+								<label class="block text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1 ml-1">İşin Tanımı</label>
+								<input type="text" id="man-desc" class="input-field h-10 border-slate-200 text-sm" placeholder="Örn: 20mm Beton Çivisi" />
+							</div>
+							<div class="col-span-6 md:col-span-3">
+								<label class="block text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1 ml-1">Miktar</label>
+								<input type="number" id="man-qty" class="input-field h-10 border-slate-200 text-sm" placeholder="0" />
+							</div>
+							<div class="col-span-6 md:col-span-2">
+								<label class="block text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1 ml-1">Birim</label>
+								<input type="text" id="man-unit" class="input-field h-10 border-slate-200 text-sm" placeholder="Adet" />
+							</div>
+							<div class="col-span-12 md:col-span-1 flex items-end">
+								<button id="add-manual-item" class="w-full h-10 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center">
+									<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+								</button>
+							</div>
+						</div>
+
+						<div id="manual-list" class="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+							<!-- Manual Items -->
+						</div>
+					</div>
+				</div>
+
+				<div id="excel-preview" class="hidden overflow-x-auto border border-slate-100 rounded-xl">
+					<table class="w-full text-sm text-left">
+						<thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold">
+							<tr id="preview-header"></tr>
+						</thead>
+						<tbody id="preview-body" class="divide-y divide-slate-100"></tbody>
+					</table>
+					<p id="item-count-msg" class="p-3 text-center text-xs font-bold text-blue-600 bg-blue-50"></p>
+				</div>
+			</div>
+
+			<!-- Step 2: Delivery & Settings -->
+			<div id="step-2" class="step-content hidden space-y-8">
+				<div class="text-center mb-4">
+					<h2 class="text-2xl font-extrabold text-slate-900">2. Teslimat Ayarları</h2>
+					<p class="text-slate-500">Konum ve satıcı gereksinimlerini belirleyin</p>
+				</div>
+
+				<div class="space-y-4">
+					<div class="flex items-center justify-between">
+						<label class="text-sm font-bold text-slate-700">Teslimat Konumu</label>
+						<button id="get-location" class="text-xs flex items-center gap-1 text-blue-600 font-bold hover:underline">
+							<Locate size={14} /> Mevcut Konumumu Kullan
+						</button>
+					</div>
+					<div id="map" class="h-64 w-full rounded-2xl border border-slate-200 overflow-hidden z-0"></div>
+					<p id="address-text" class="text-xs bg-slate-50 p-3 rounded-lg border border-slate-100 text-slate-600 font-medium italic">Konum seçilmedi</p>
+				</div>
+
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+					<div>
+						<label class="block text-sm font-bold text-slate-700 mb-3">Nakliye Durumu</label>
+						<div class="space-y-2">
+							{['Dahil olsun', 'Dahil olmasın', 'Satıcı seçsin'].map(opt => (
+								<label class="flex items-center gap-3 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+									<input type="radio" name="shipping" value={opt} class="w-4 h-4 text-blue-600" checked={opt === 'Dahil olsun'} />
+									<span class="text-sm font-medium">{opt}</span>
+								</label>
+							))}
+						</div>
+					</div>
+
+					</div>
+				</div>
+
+				<!-- Technical Documents Section -->
+				<div class="space-y-4 pt-6 border-t border-slate-100">
+					<div>
+						<h3 class="text-sm font-bold text-slate-700 mb-1">Teknik Dökümanlar & Şartname</h3>
+						<p class="text-[10px] text-slate-400 font-medium">Satıcıların detaylı inceleyebilmesi için teknik çizim, şartname veya katalog ekleyin</p>
+					</div>
+					
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<!-- File Upload -->
+						<div class="p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200 hover:border-blue-400 transition-all text-center">
+							<input type="file" id="attachment-file" class="hidden" />
+							<label for="attachment-file" class="cursor-pointer flex flex-col items-center gap-2">
+								<Upload size={24} class="text-slate-400" />
+								<span class="text-[11px] font-bold text-slate-600">Dosya Yükle (PDF, PNG, JPG)</span>
+								<span class="text-[9px] text-slate-400 italic">Maksimum 10MB</span>
+							</label>
+						</div>
+
+						<!-- Link Add -->
+						<div class="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+							<div class="flex flex-col h-full justify-between gap-2">
+								<div class="flex items-center gap-2">
+									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+									<span class="text-[11px] font-bold text-slate-600">Harici Link Ekle (Dropdown, WeTransfer vb.)</span>
+								</div>
+								<div class="flex gap-2">
+									<input type="text" id="attachment-link-url" class="flex-grow input-field h-8 text-[11px]" placeholder="https://..." />
+									<button id="add-link-btn" class="btn-primary h-8 px-3 text-[10px] whitespace-nowrap">Ekle</button>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Attached Assets List -->
+					<div id="attached-assets-list" class="flex flex-wrap gap-2">
+						<!-- Assets will be rendered here -->
+					</div>
+				</div>
+			</div>
+
+			<!-- Step 3: Preview & Submit -->
+			<div id="step-3" class="step-content hidden space-y-8">
+				<div class="text-center">
+					<CheckCircle size={60} class="text-green-500 mx-auto mb-4" />
+					<h2 class="text-2xl font-extrabold text-slate-900">3. Yayınla</h2>
+					<p class="text-slate-500">Bilgileri kontrol edip talebinizi yayınlayın</p>
+				</div>
+
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+						<p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">Talep Bilgisi</p>
+						<h3 id="final-title" class="truncate font-bold text-slate-900"></h3>
+						<p id="final-stats" class="text-sm text-slate-500 mt-1"></p>
+					</div>
+					<div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+						<p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">Teslimat</p>
+						<p id="final-address" class="text-sm font-medium text-slate-700 line-clamp-2 italic"></p>
+					</div>
+				</div>
+
+				<div class="bg-blue-50 p-4 rounded-2xl border border-blue-100">
+					<p class="text-sm text-blue-700 leading-relaxed">
+						<strong>Not:</strong> Talebiniz yayınlandıktan sonra bölgedeki tüm satıcılara bildirim gidecek ve anlık teklifleri takip edebileceksiniz.
+					</p>
+				</div>
+			</div>
+
+			<!-- Footer Buttons -->
+			<div class="mt-auto pt-8 flex items-center justify-between">
+				<button id="btn-prev" class="btn-secondary hidden flex items-center gap-2">
+					<ChevronLeft size={18} /> Geri
+				</button>
+				<button id="btn-next" class="btn-primary ml-auto flex items-center gap-2">
+					Devam Et <ChevronRight size={18} />
+				</button>
+				<button id="btn-submit" class="btn-primary hidden bg-green-600 hover:bg-green-700 ml-auto flex items-center gap-2">
+					Talebi Yayınla <CheckCircle size={18} />
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Leaflet & SheetJS -->
+	<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+	<script is:inline src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+	<script is:inline>
+		let currentStep = 1;
+		let pageState = {
+			title: '',
+			items: [],
+			lat: null, 
+			lng: null,
+			address: '',
+			shipping: 'Dahil olsun',
+			photo_required: false,
+			location_required: false,
+			expires_at: '',
+			asset_ids: []
+		};
+
+		const nextBtn = document.getElementById('btn-next');
+		const prevBtn = document.getElementById('btn-prev');
+		const submitBtn = document.getElementById('btn-submit');
+		const excelInput = document.getElementById('excel-input');
+		const reqTitleInp = document.getElementById('req-title');
+
+		// Manual Entry Elements
+		const btnShowExcel = document.getElementById('btn-show-excel');
+		const btnShowManual = document.getElementById('btn-show-manual');
+		const excelArea = document.getElementById('excel-area');
+		const manualArea = document.getElementById('manual-area');
+		const manualList = document.getElementById('manual-list');
+		const addManualBtn = document.getElementById('add-manual-item');
+		const excelPreview = document.getElementById('excel-preview');
+
+		btnShowExcel.onclick = () => {
+			excelArea.classList.remove('hidden');
+			manualArea.classList.add('hidden');
+			btnShowExcel.className = 'px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-wider border border-blue-100 shadow-sm';
+			btnShowManual.className = 'px-3 py-1.5 rounded-lg bg-slate-50 text-slate-500 text-[10px] font-black uppercase tracking-wider border border-slate-100';
+			pageState.items = []; // Reset on switch
+			excelPreview.classList.add('hidden');
+		};
+
+		btnShowManual.onclick = () => {
+			manualArea.classList.remove('hidden');
+			excelArea.classList.add('hidden');
+			btnShowManual.className = 'px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-wider border border-blue-100 shadow-sm';
+			btnShowExcel.className = 'px-3 py-1.5 rounded-lg bg-slate-50 text-slate-500 text-[10px] font-black uppercase tracking-wider border border-slate-100';
+			pageState.items = []; // Reset on switch
+			excelPreview.classList.add('hidden');
+			renderManualList();
+		};
+
+		addManualBtn.onclick = () => {
+			const desc = document.getElementById('man-desc');
+			const qty = document.getElementById('man-qty');
+			const unit = document.getElementById('man-unit');
+
+			if(!desc.value || !qty.value) return alert('Lütfen tanım ve miktar girin.');
+
+			const newItem = {
+				"İŞİN TANIMI": desc.value,
+				"MİKTARI": qty.value,
+				"BİRİM": unit.value || 'Adet',
+				"NO": pageState.items.length + 1
+			};
+
+			pageState.items.push(newItem);
+			desc.value = ''; qty.value = ''; unit.value = '';
+			renderManualList();
+		};
+
+		function renderManualList() {
+			manualList.innerHTML = pageState.items.map((it, idx) => `
+				<div class="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl group transition-all hover:border-blue-200">
+					<div class="flex-grow min-w-0 mr-4">
+						<div class="flex items-center gap-2">
+							<span class="text-[9px] font-black text-slate-400">#${it.NO}</span>
+							<p class="font-bold text-slate-900 truncate text-xs uppercase tracking-tight">${it["İŞİN TANIMI"]}</p>
+						</div>
+						<div class="flex gap-4 mt-1">
+							<p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">MİKTAR: <span class="text-blue-600">${it.MİKTARI}</span></p>
+							<p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">BİRİM: <span class="text-blue-600">${it.BİRİM}</span></p>
+						</div>
+					</div>
+					<button onclick="window.removeManualItem(${idx})" class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+					</button>
+				</div>
+			`).join('');
+		}
+
+		window.removeManualItem = (idx) => {
+			pageState.items.splice(idx, 1);
+			// Re-index
+			pageState.items.forEach((it, i) => it.NO = i + 1);
+			renderManualList();
+		};
+
+		// Step Navigation
+		function updateStepUI() {
+			document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
+			document.getElementById(`step-${currentStep}`).classList.remove('hidden');
+
+			// Update Progress Bar
+			for(let i=1; i<=3; i++) {
+				const circle = document.getElementById(`step-circle-${i}`);
+				const line = document.getElementById(`step-line-${i}`);
+				if(i <= currentStep) {
+					circle.classList.add('bg-blue-600', 'border-blue-600', 'text-white', 'shadow-blue-500/30');
+					circle.classList.remove('bg-white', 'border-slate-200', 'text-slate-400');
+					if(line) line.classList.add('bg-blue-600');
+				} else {
+					circle.classList.remove('bg-blue-600', 'border-blue-600', 'text-white', 'shadow-blue-500/30');
+					circle.classList.add('bg-white', 'border-slate-200', 'text-slate-400');
+					if(line) line.classList.remove('bg-blue-600');
+				}
+			}
+
+			prevBtn.classList.toggle('hidden', currentStep === 1);
+			nextBtn.classList.toggle('hidden', currentStep === 3);
+			submitBtn.classList.toggle('hidden', currentStep !== 3);
+
+			if(currentStep === 2) initMap();
+			if(currentStep === 3) populateSummary();
+		}
+
+		nextBtn.onclick = () => {
+			if(currentStep === 1) {
+				if(!reqTitleInp.value) return alert('Lütfen bir başlık girin.');
+				if(pageState.items.length === 0) return alert('Lütfen bir Excel dosyası yükleyin.');
+				pageState.title = reqTitleInp.value;
+			}
+			currentStep++;
+			updateStepUI();
+		};
+
+		prevBtn.onclick = () => {
+			currentStep--;
+			updateStepUI();
+		};
+
+		// Excel Parsing
+		excelInput.onchange = (e) => {
+			const file = e.target.files[0];
+			if(!file) return;
+			document.getElementById('file-name').textContent = file.name;
+
+			const reader = new FileReader();
+			reader.onload = (evt) => {
+				const bstr = evt.target.result;
+				const wb = XLSX.read(bstr, { type: 'binary' });
+				const wsname = wb.SheetNames[0];
+				const ws = wb.Sheets[wsname];
+				const data = XLSX.utils.sheet_to_json(ws);
+				
+				pageState.items = data;
+				renderPreview(data);
+			};
+			reader.readAsBinaryString(file);
+		};
+
+		function renderPreview(data) {
+			const preview = document.getElementById('excel-preview');
+			const header = document.getElementById('preview-header');
+			const body = document.getElementById('preview-body');
+			const countMsg = document.getElementById('item-count-msg');
+
+			preview.classList.remove('hidden');
+			header.innerHTML = '';
+			body.innerHTML = '';
+
+			if(data.length === 0) return;
+
+			// Header
+			const keys = Object.keys(data[0]);
+			keys.forEach(k => {
+				const th = document.createElement('th');
+				th.className = 'px-4 py-2 border-b border-slate-100';
+				th.textContent = k;
+				header.appendChild(th);
+			});
+
+			// Body (First 5)
+			data.slice(0, 5).forEach(row => {
+				const tr = document.createElement('tr');
+				keys.forEach(k => {
+					const td = document.createElement('td');
+					td.className = 'px-4 py-2 text-slate-600 font-medium';
+					td.textContent = row[k];
+					tr.appendChild(td);
+				});
+				body.appendChild(tr);
+			});
+
+			countMsg.textContent = `${data.length} ürün başarıyla yüklendi.`;
+		}
+
+		// Map Logic
+		let map, marker;
+		function initMap() {
+			if(map) return;
+			map = L.map('map').setView([39.9, 32.8], 6);
+			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+			map.on('click', async (e) => {
+				const { lat, lng } = e.latlng;
+				setMarker(lat, lng);
+				await fetchAddress(lat, lng);
+			});
+
+			document.getElementById('get-location').onclick = () => {
+				navigator.geolocation.getCurrentPosition(async (pos) => {
+					const { latitude, longitude } = pos.coords;
+					map.setView([latitude, longitude], 15);
+					setMarker(latitude, longitude);
+					await fetchAddress(latitude, longitude);
+				});
+			};
+		}
+
+		function setMarker(lat, lng) {
+			if(marker) map.removeLayer(marker);
+			marker = L.marker([lat, lng]).addTo(map);
+			pageState.lat = lat;
+			pageState.lng = lng;
+		}
+
+		async function fetchAddress(lat, lng) {
+			const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+			const data = await res.json();
+			pageState.address = data.display_name;
+			document.getElementById('address-text').textContent = data.display_name;
+		}
+
+		function populateSummary() {
+			document.getElementById('final-title').textContent = pageState.title;
+			document.getElementById('final-stats').textContent = `${pageState.items.length} Ürün • ${document.querySelector('input[name="shipping"]:checked').value}`;
+			document.getElementById('final-address').textContent = pageState.address || 'Konum seçilmedi';
+		}
+
+		submitBtn.onclick = async () => {
+			submitBtn.disabled = true;
+			submitBtn.textContent = 'Yayınlanıyor...';
+
+			const photo_req = document.getElementById('photo-req').checked;
+			const loc_req = document.getElementById('loc-req').checked;
+			const shipping = document.querySelector('input[name="shipping"]:checked').value;
+			const expires_at = document.getElementById('expires-at').value;
+
+			const body = {
+				...pageState,
+				photo_required: photo_req,
+				location_required: loc_req,
+				shipping_note: shipping,
+				delivery_address: pageState.address,
+				delivery_lat: pageState.lat,
+				delivery_lng: pageState.lng,
+				expires_at: expires_at || null,
+				asset_ids: pageState.asset_ids
+			};
+
+			try {
+				const res = await fetch('http://localhost:3001/api/buyer/requests', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify(body)
+				});
+				if(res.ok) {
+					alert('Talebiniz başarıyla yayınlandı!');
+					window.location.href = '/buyer/dashboard';
+				}
+			} catch (err) {
+				alert('Bir hata oluştu.');
+			} finally {
+				submitBtn.disabled = false;
+				submitBtn.textContent = 'Talebi Yayınla';
+			}
+		};
+
+		// Attachment Handling
+		const attachmentFile = document.getElementById('attachment-file');
+		const attachmentLinkUrl = document.getElementById('attachment-link-url');
+		const addLinkBtn = document.getElementById('add-link-btn');
+		const attachedAssetsList = document.getElementById('attached-assets-list');
+
+		attachmentFile.onchange = async (e) => {
+			const file = e.target.files[0];
+			if (!file) return;
+
+			const formData = new FormData();
+			formData.append('file', file);
+
+			try {
+				const res = await fetch('http://localhost:3001/api/upload', {
+					method: 'POST',
+					credentials: 'include',
+					body: formData
+				});
+				const data = await res.json();
+				if (data.success) {
+					pageState.asset_ids.push(data.id);
+					renderAttachedAssets(data.id, data.name, 'file');
+				}
+			} catch (err) {
+				alert('Dosya yüklenemedi.');
+			}
+		};
+
+		addLinkBtn.onclick = async () => {
+			const url = attachmentLinkUrl.value;
+			if (!url) return alert('Lütfen geçerli bir URL girin.');
+
+			try {
+				const res = await fetch('http://localhost:3001/api/user-assets/link', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify({ name: 'Döküman Linki', url })
+				});
+				const data = await res.json();
+				if (data.success) {
+					pageState.asset_ids.push(data.id);
+					renderAttachedAssets(data.id, url, 'link');
+					attachmentLinkUrl.value = '';
+				}
+			} catch (err) {
+				alert('Link eklenemedi.');
+			}
+		};
+
+		function renderAttachedAssets(id, label, type) {
+			const div = document.createElement('div');
+			div.id = `asset-${id}`;
+			div.className = 'flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-[10px] font-bold border border-blue-200';
+			div.innerHTML = `
+				<span class="truncate max-w-[150px]">${type === 'file' ? '📄' : '🔗'} ${label}</span>
+				<button onclick="window.removeAsset(${id})" class="hover:text-red-600">
+					<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+				</button>
+			`;
+			attachedAssetsList.appendChild(div);
+		}
+
+		window.removeAsset = (id) => {
+			pageState.asset_ids = pageState.asset_ids.filter(aid => aid !== id);
+			document.getElementById(`asset-${id}`).remove();
+		};
+	</script>
+</Layout>

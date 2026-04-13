@@ -1,0 +1,138 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Folder, FileText, Link, Trash2, Plus, ArrowLeft, UploadCloud } from 'lucide-astro';
+---
+
+<Layout title="Döküman Kütüphanem" role="seller">
+	<div class="max-w-2xl mx-auto px-4 py-8 pb-24">
+		<a href="/seller/dashboard" class="flex items-center gap-1 text-slate-500 font-bold mb-6 hover:text-blue-600 transition-colors group">
+			<ArrowLeft size={18} class="group-hover:-translate-x-1 transition-transform" /> Panife Dön
+		</a>
+
+		<div class="mb-8 flex justify-between items-center gap-4">
+			<div>
+				<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Döküman Kütüphanem</h1>
+				<p class="text-slate-500 font-medium">Tekliflerinize ekleyeceğiniz teknik dosyaları yönetin</p>
+			</div>
+		</div>
+
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+			<!-- Upload Section -->
+			<div class="glass-card p-6 rounded-3xl border-2 border-dashed border-slate-200 hover:border-blue-400 transition-all group flex flex-col items-center justify-center text-center relative overflow-hidden">
+				<input type="file" id="file-upload" class="absolute inset-0 opacity-0 cursor-pointer" />
+				<div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+					<UploadCloud size={24} />
+				</div>
+				<p class="font-black text-slate-900 text-sm">Yeni Dosya Yükle</p>
+				<p class="text-[10px] text-slate-400 font-medium mt-1">PDF, Ürün Kataloğu veya Sertifika</p>
+			</div>
+
+			<!-- Add Link Section -->
+			<div class="glass-card p-6 rounded-3xl border-2 border-slate-100 bg-white shadow-xl flex flex-col justify-center">
+				<div class="flex items-center gap-3 mb-4">
+					<div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center">
+						<Link size={20} />
+					</div>
+					<p class="font-black text-slate-900 text-sm">Yeni Link Ekle</p>
+				</div>
+				<div class="flex gap-2">
+					<input type="text" id="link-url" class="flex-grow input-field h-10 text-xs px-3" placeholder="https://..." />
+					<button id="btn-add-link" class="btn-primary h-10 px-4 text-xs font-black">EKLE</button>
+				</div>
+			</div>
+		</div>
+
+		<div class="space-y-4">
+			<h2 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Kütüphanedeki Dosyalar</h2>
+			<div id="assets-container" class="space-y-3">
+				<!-- Assets -->
+				<div class="h-20 bg-slate-50 rounded-2xl animate-pulse"></div>
+				<div class="h-20 bg-slate-50 rounded-2xl animate-pulse"></div>
+			</div>
+		</div>
+	</div>
+
+	<script is:inline>
+		const container = document.getElementById('assets-container');
+		const fileInput = document.getElementById('file-upload');
+		const linkInput = document.getElementById('link-url');
+		const linkBtn = document.getElementById('btn-add-link');
+
+		async function loadAssets() {
+			try {
+				const res = await fetch('http://localhost:3001/api/user-assets', { credentials: 'include' });
+				const assets = await res.json();
+				
+				if (assets.length === 0) {
+					container.innerHTML = `
+						<div class="text-center py-12 bg-slate-50 rounded-3xl border border-slate-100">
+							<p class="text-slate-400 font-bold">Kütüphaneniz henüz boş.</p>
+						</div>
+					`;
+					return;
+				}
+
+				container.innerHTML = assets.map(asset => `
+					<div class="glass-card p-4 rounded-2xl flex items-center justify-between group hover:shadow-xl transition-all border-slate-100 hover:border-blue-200">
+						<div class="flex items-center gap-4 overflow-hidden">
+							<div class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors shrink-0 font-bold">
+								${asset.type === 'file' ? '📄' : '🔗'}
+							</div>
+							<div class="overflow-hidden">
+								<p class="font-black text-slate-900 text-sm truncate">${asset.name}</p>
+								<p class="text-[10px] text-slate-400 font-medium mt-0.5">${new Date(asset.created_at).toLocaleDateString('tr-TR')} • ${asset.type === 'file' ? 'Dosya' : 'Dış Bağıntı'}</p>
+							</div>
+						</div>
+						<div class="flex items-center gap-2">
+							<button onclick="window.deleteAsset(${asset.id})" class="p-2 text-slate-300 hover:text-red-500 transition-colors">
+								<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+							</button>
+						</div>
+					</div>
+				`).join('');
+			} catch (err) { console.error(err); }
+		}
+
+		fileInput.onchange = async (e) => {
+			const file = e.target.files[0];
+			if (!file) return;
+			const formData = new FormData();
+			formData.append('file', file);
+			try {
+				const res = await fetch('http://localhost:3001/api/upload', {
+					method: 'POST',
+					credentials: 'include',
+					body: formData
+				});
+				if (res.ok) loadAssets();
+			} catch (err) { alert('Yükleme hatası'); }
+		};
+
+		linkBtn.onclick = async () => {
+			const url = linkInput.value;
+			if (!url) return;
+			try {
+				const res = await fetch('http://localhost:3001/api/user-assets/link', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify({ name: 'Link', url })
+				});
+				if (res.ok) {
+					linkInput.value = '';
+					loadAssets();
+				}
+			} catch (err) { alert('Hata'); }
+		};
+
+		window.deleteAsset = async (id) => {
+			if (!confirm('Bu dökümanı kütüphaneden silmek istediğinize emin misiniz?')) return;
+			try {
+				await fetch(`http://localhost:3001/api/user-assets/${id}`, { method: 'DELETE', credentials: 'include' });
+				loadAssets();
+			} catch (err) { alert('Silinemedi'); }
+		};
+
+		loadAssets();
+	</script>
+</Layout>

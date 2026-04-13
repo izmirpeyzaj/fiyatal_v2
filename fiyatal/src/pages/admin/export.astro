@@ -1,0 +1,78 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Download, FileSpreadsheet, Users, ShoppingBag, MessageSquare } from 'lucide-astro';
+---
+
+<Layout title="Excel Export" role="admin">
+	<div class="max-w-4xl mx-auto px-4 py-8">
+		<div class="mb-8">
+			<h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Export Center</h1>
+			<p class="text-slate-500 font-medium">Platform verilerini Excel formatında dışa aktarın</p>
+		</div>
+
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+			<!-- Export Cards -->
+			{[
+				{ id: 'export-users', label: 'Tüm Kullanıcılar', icon: Users, color: 'blue', desc: 'Alıcı, satıcı ve admin listesi' },
+				{ id: 'export-requests', label: 'Tüm Talepler', icon: ShoppingBag, color: 'orange', desc: 'Oluşturulan tüm malzeme talepleri' },
+				{ id: 'export-offers', label: 'Tüm Teklifler', icon: MessageSquare, color: 'green', desc: 'Verilen tüm fiyat teklifleri ve detaylar' }
+			].map(item => (
+				<div class="glass-card p-6 rounded-3xl group hover:shadow-2xl transition-all">
+					<div class="flex items-start justify-between mb-4">
+						<div class={`p-3 rounded-2xl bg-${item.color}-50 text-${item.color}-600 group-hover:scale-110 transition-transform`}>
+							<item.icon size={28} />
+						</div>
+					</div>
+					<h2 class="text-xl font-bold text-slate-900 mb-1">{item.label}</h2>
+					<p class="text-sm text-slate-500 font-medium mb-6">{item.desc}</p>
+					<button id={item.id} class="w-full btn-primary bg-slate-900 hover:bg-black py-3 flex items-center justify-center gap-2">
+						<Download size={18} />
+						Excel Olarak İndir
+					</button>
+				</div>
+			))}
+		</div>
+	</div>
+
+	<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+	<script is:inline>
+		async function handleBackendExport() {
+			const btn = document.getElementById('export-all-unified');
+			const originalText = btn.innerHTML;
+			
+			btn.disabled = true;
+			btn.innerHTML = '<span>Rapor Hazırlanıyor...</span>';
+
+			try {
+				window.location.href = 'http://localhost:3001/api/admin/reports/excel';
+			} catch (err) {
+				alert('Dosya oluşturulamadı.');
+			} finally {
+				setTimeout(() => {
+					btn.disabled = false;
+					btn.innerHTML = originalText;
+				}, 2000);
+			}
+		}
+
+		// Update UI to show unified export
+		const grid = document.querySelector('.grid');
+		grid.innerHTML = `
+			<div class="glass-card p-8 rounded-3xl col-span-full bg-slate-900 text-white shadow-2xl shadow-slate-900/20">
+				<div class="flex items-center gap-6 mb-8">
+					<div class="p-4 bg-blue-500 rounded-2xl text-white">
+						<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-spreadsheet"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/><path d="M10 8v10"/><path d="M8 8h8"/></svg>
+					</div>
+					<div>
+						<h2 class="text-2xl font-black tracking-tight">Kapsamlı Platform Raporu</h2>
+						<p class="text-slate-400 font-medium">Tüm projeler, kalem bazlı fiyatlar ve teklif detaylarını içeren tek dosya.</p>
+					</div>
+				</div>
+				<button id="export-all-unified" onclick="handleBackendExport()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-5 rounded-2xl flex items-center justify-center gap-3 transition-all">
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download-cloud"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m8 17 4 4 4-4"/></svg>
+					Excel Raporu Oluştur ve İndir
+				</button>
+			</div>
+		`;
+	</script>
+</Layout>
