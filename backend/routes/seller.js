@@ -18,6 +18,16 @@ router.get('/requests', requireAuth, requireRole('seller'), (req, res) => {
     res.json(requests);
 });
 
+router.get('/requests/search', requireAuth, requireRole('seller'), (req, res) => {
+    const { q, location } = req.query;
+    let query = `SELECT r.*, u.company_name as buyer_company, (SELECT COUNT(*) FROM request_items WHERE request_id = r.id) as item_count FROM requests r JOIN users u ON r.buyer_id = u.id WHERE r.status = 'active'`;
+    const params = [];
+    if (q) { query += " AND (r.title LIKE ? OR EXISTS (SELECT 1 FROM request_items ri WHERE ri.request_id = r.id AND ri.properties LIKE ?))"; params.push(`%${q}%`, `%${q}%`); }
+    if (location) { query += " AND r.delivery_address LIKE ?"; params.push(`%${location}%`); }
+    query += " ORDER BY r.created_at DESC";
+    res.json(db.prepare(query).all(...params));
+});
+
 router.get('/requests/:id', requireAuth, requireRole('seller'), (req, res) => {
     const request = db.prepare(`
         SELECT r.*, u.company_name as buyer_company
@@ -206,16 +216,6 @@ router.get('/projects', requireAuth, requireRole('seller'), (req, res) => {
         ORDER BY p.created_at DESC
     `).all(req.session.userId, req.session.userId);
     res.json(projects);
-});
-
-router.get('/requests/search', requireAuth, requireRole('seller'), (req, res) => {
-    const { q, location } = req.query;
-    let query = `SELECT r.*, u.company_name as buyer_company, (SELECT COUNT(*) FROM request_items WHERE request_id = r.id) as item_count FROM requests r JOIN users u ON r.buyer_id = u.id WHERE r.status = 'active'`;
-    const params = [];
-    if (q) { query += " AND (r.title LIKE ? OR EXISTS (SELECT 1 FROM request_items ri WHERE ri.request_id = r.id AND ri.properties LIKE ?))"; params.push(`%${q}%`, `%${q}%`); }
-    if (location) { query += " AND r.delivery_address LIKE ?"; params.push(`%${location}%`); }
-    query += " ORDER BY r.created_at DESC";
-    res.json(db.prepare(query).all(...params));
 });
 
 router.get('/stats', requireAuth, requireRole('seller'), (req, res) => {

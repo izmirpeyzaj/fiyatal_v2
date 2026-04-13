@@ -155,44 +155,6 @@ const { id } = Astro.params;
 		const questionText = document.getElementById('question-text');
 		const submitQuestionBtn = document.getElementById('submit-question');
 
-		async function initQuote() {
-			try {
-				const res = await fetch(`${API_BASE}/api/seller/requests/${id}`, { credentials: 'include' });
-				const req = await res.json();
-				
-				// Deadline Check
-				if (req.expires_at) {
-					const now = new Date();
-					const deadline = new Date(req.expires_at);
-					if (now > deadline) {
-						document.getElementById('expired-alert').classList.remove('hidden');
-						return;
-					}
-				}
-
-				state.items = req.items;
-				totalText.textContent = state.items.length;
-
-				// Revision logic: Check for existing offer
-				try {
-					const oRes = await fetch(`${API_BASE}/api/seller/requests/${id}/my-offer`, { credentials: 'include' });
-					if (oRes.ok) {
-						const myOffer = await oRes.json();
-						if (myOffer) {
-							// Pre-fill existing prices and photos
-							myOffer.items.forEach(it => {
-								state.prices[it.request_item_id] = it.unit_price;
-								if (it.photo_url) state.photos[it.request_item_id] = it.photo_url;
-							});
-						}
-					}
-				} catch (oErr) { console.warn("No existing offer found", oErr); }
-
-				renderCard();
-				loadQuestions();
-			} catch (err) { console.error(err); }
-		}
-
 		let allQuestions = [];
 
 		async function initQuote() {
