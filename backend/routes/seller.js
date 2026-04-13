@@ -208,4 +208,72 @@ router.get('/projects', requireAuth, requireRole('seller'), (req, res) => {
     res.json(projects);
 });
 
+router.get('/requests/search', requireAuth, requireRole('seller'), (req, res) => {
+    const { q, location } = req.query;
+    let query = `SELECT r.*, u.company_name as buyer_company, (SELECT COUNT(*) FROM request_items WHERE request_id = r.id) as item_count FROM requests r JOIN users u ON r.buyer_id = u.id WHERE r.status = 'active'`;
+    const params = [];
+    if (q) { query += " AND (r.title LIKE ? OR EXISTS (SELECT 1 FROM request_items ri WHERE ri.request_id = r.id AND ri.properties LIKE ?))"; params.push(`%${q}%`, `%${q}%`); }
+    if (location) { query += " AND r.delivery_address LIKE ?"; params.push(`%${location}%`); }
+    query += " ORDER BY r.created_at DESC";
+    res.json(db.prepare(query).all(...params));
+});
+
+router.get('/stats', requireAuth, requireRole('seller'), (req, res) => {
+    const userId = req.session.userId;
+    const totalOffers = db.prepare('SELECT COUNT(*) as count FROM offers WHERE seller_id = ?').get(userId).count;
+    const acceptedOffers = db.prepare("SELECT COUNT(*) as count FROM offers WHERE seller_id = ? AND status = 'accepted'").get(userId).count;
+    const pendingOffers = db.prepare("SELECT COUNT(*) as count FROM offers WHERE seller_id = ? AND status = 'pending'").get(userId).count;
+    const winRate = totalOffers > 0 ? ((acceptedOffers / totalOffers) * 100).toFixed(1) : 0;
+    const avgRating = db.prepare('SELECT AVG(rating) as avg FROM seller_ratings WHERE seller_id = ?').get(userId).avg || 0;
+    const monthlyData = db.prepare(`SELECT strftime('%Y-%m', o.submitted_at) as month, COUNT(*) as offers, SUM(CASE WHEN o.status = 'accepted' THEN 1 ELSE 0 END) as accepted FROM offers o WHERE o.seller_id = ? GROUP BY month ORDER BY month DESC LIMIT 6`).all(userId);
+    res.json({ totalOffers, acceptedOffers, pendingOffers, winRate, avgRating: parseFloat(avgRating).toFixed(1), monthlyData: monthlyData.reverse() });
+});
+
+router.get('/price-alerts', requireAuth, requireRole('seller'), (req, res) => {
+    res.json(db.prepare('SELECT * FROM price_alerts WHERE seller_id = ? ORDER BY created_at DESC').all(req.session.userId));
+});
+
+router.post('/price-alerts', requireAuth, requireRole('seller'), (req, res) => {
+    const { category, min_price, max_price } = req.body;
+    if (!category) return res.status(400).json({ error: 'Kategori gereklidir.' });
+    db.prepare('INSERT INTO price_alerts (seller_id, category, min_price, max_price) VALUES (?, ?, ?, ?)').run(req.session.userId, category, min_price || null, max_price || null);
+    res.json({ success: true });
+});
+
+router.delete('/price-alerts/:id', requireAuth, requireRole('seller'), (req, res) => {
+    db.prepare('DELETE FROM price_alerts WHERE id = ? AND seller_id = ?').run(req.params.id, req.session.userId);
+    res.json({ success: true });
+});
+
+router.get('/profile/showcase', requireAuth, requireRole('seller'), (req, res) => {
+    let profile = db.prepare('SELECT * FROM seller_profiles WHERE seller_id = ?').get(req.session.userId);
+    if (!profile) { db.prepare('INSERT INTO seller_profiles (seller_id) VALUES (?)').run(req.session.userId); profile = db.prepare('SELECT * FROM seller_profiles WHERE seller_id = ?').get(req.session.userId); }
+    res.json(profile);
+});
+
+router.put('/profile/showcase', requireAuth, requireRole('seller'), (req, res) => {
+    const { description, website, city, sector, established_year, employee_count, certificates, cover_image } = req.body;
+    const existing = db.prepare('SELECT id FROM seller_profiles WHERE seller_id = ?').get(req.session.userId);
+    if (!existing) db.prepare('INSERT INTO seller_profiles (seller_id) VALUES (?)').run(req.session.userId);
+    db.prepare(`UPDATE seller_profiles SET description=?, website=?, city=?, sector=?, established_year=?, employee_count=?, certificates=?, cover_image=?, updated_at=CURRENT_TIMESTAMP WHERE seller_id = ?`).run(description || '', website || '', city || '', sector || '', established_year || null, employee_count || '', JSON.stringify(certificates || []), cover_image || '', req.session.userId);
+    res.json({ success: true });
+});
+
+router.get('/showcase/:id', (req, res) => {
+    const seller = db.prepare(`
+        SELECT u.id, u.name, u.company_name, u.is_verified, u.created_at,
+        sp.description, sp.website, sp.city, sp.sector, sp.established_year, sp.employee_count, sp.certificates, sp.cover_image,
+        (SELECT AVG(rating) FROM seller_ratings WHERE seller_id = u.id) as avg_rating,
+        (SELECT COUNT(*) FROM seller_ratings WHERE seller_id = u.id) as rating_count,
+        (SELECT COUNT(*) FROM offers WHERE seller_id = u.id) as total_offers
+        FROM users u LEFT JOIN seller_profiles sp ON u.id = sp.seller_id
+        WHERE u.id = ? AND u.role = 'seller' AND u.status = 'active'
+    `).get(req.params.id);
+    if (!seller) return res.status(404).json({ error: 'Satici bulunamadi.' });
+
+    const publicRatings = db.prepare(`SELECT sr.rating, sr.comment, sr.created_at, u.company_name as buyer_company FROM seller_ratings sr JOIN users u ON sr.buyer_id = u.id WHERE sr.seller_id = ? AND sr.is_private = 0 ORDER BY sr.created_at DESC LIMIT 10`).all(req.params.id);
+    if (seller.certificates) { try { seller.certificates = JSON.parse(seller.certificates); } catch(e) { seller.certificates = []; } }
+    res.json({ ...seller, ratings: publicRatings });
+});
+
 module.exports = router;

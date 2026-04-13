@@ -1,0 +1,296 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { ChevronLeft, Building2, MapPin, Globe, Star, ShieldCheck, Heart, Award, Users, Calendar, TrendingUp, FileText } from 'lucide-astro';
+
+const { id } = Astro.params;
+---
+
+<Layout title="Satici Profili" role="buyer">
+	<div class="max-w-2xl mx-auto px-4 py-8 pb-32">
+		<div class="flex items-center justify-between mb-8">
+			<a href="javascript:history.back()" class="flex items-center gap-1 text-slate-500 font-bold hover:text-blue-600 transition-colors">
+				<ChevronLeft size={20} /> Geri Don
+			</a>
+			<button id="fav-btn" class="flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-slate-200 text-slate-600 text-xs font-black rounded-2xl hover:border-red-300 hover:text-red-500 hover:bg-red-50 transition-all shadow-sm">
+				<Heart size={16} />
+				<span id="fav-text">Favorilere Ekle</span>
+			</button>
+		</div>
+
+		<div id="loading" class="text-center py-20">
+			<div class="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+			<p class="text-slate-400 font-bold mt-4">Yukleniyor...</p>
+		</div>
+
+		<div id="content" class="hidden space-y-6">
+			<div class="glass-card p-8 rounded-3xl text-center relative overflow-hidden">
+				<div class="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-slate-50/50"></div>
+				<div class="relative">
+					<div id="cover-image-container" class="hidden mb-4">
+						<img id="cover-image" class="w-full h-40 object-cover rounded-2xl" src="" alt="" />
+					</div>
+					<div class="w-24 h-24 rounded-3xl bg-blue-600 text-white flex items-center justify-center mx-auto shadow-2xl shadow-blue-500/30 mb-5">
+						<Building2 size={48} />
+					</div>
+					<h1 id="company-name" class="text-3xl font-extrabold text-slate-900 tracking-tight"></h1>
+					<p id="seller-name" class="text-slate-500 font-bold mt-1"></p>
+					<div id="verified-badge" class="hidden inline-flex items-center gap-1.5 px-3 py-1 bg-blue-600 text-white text-[10px] font-black rounded-full shadow-lg shadow-blue-500/20 mt-3">
+						<ShieldCheck size={12} />
+						DOGRULANMIS SATICI
+					</div>
+					<div class="flex items-center justify-center gap-4 mt-4 flex-wrap">
+						<div id="city-badge" class="hidden flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-600 text-xs font-bold rounded-full">
+							<MapPin size={14} />
+							<span id="city-text"></span>
+						</div>
+						<div id="sector-badge" class="hidden flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-600 text-xs font-bold rounded-full">
+							<TrendingUp size={14} />
+							<span id="sector-text"></span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+				<div class="glass-card p-4 rounded-2xl text-center">
+					<div class="flex items-center justify-center mb-2">
+						<div class="p-2 bg-yellow-50 rounded-xl text-yellow-500">
+							<Star size={18} />
+						</div>
+					</div>
+					<p id="stat-rating" class="text-xl font-extrabold text-slate-900">-</p>
+					<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Puan</p>
+				</div>
+				<div class="glass-card p-4 rounded-2xl text-center">
+					<div class="flex items-center justify-center mb-2">
+						<div class="p-2 bg-blue-50 rounded-xl text-blue-500">
+							<Users size={18} />
+						</div>
+					</div>
+					<p id="stat-reviews" class="text-xl font-extrabold text-slate-900">0</p>
+					<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Degerlendirme</p>
+				</div>
+				<div class="glass-card p-4 rounded-2xl text-center">
+					<div class="flex items-center justify-center mb-2">
+						<div class="p-2 bg-green-50 rounded-xl text-green-500">
+							<FileText size={18} />
+						</div>
+					</div>
+					<p id="stat-offers" class="text-xl font-extrabold text-slate-900">0</p>
+					<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Teklif</p>
+				</div>
+				<div class="glass-card p-4 rounded-2xl text-center">
+					<div class="flex items-center justify-center mb-2">
+						<div class="p-2 bg-purple-50 rounded-xl text-purple-500">
+							<Calendar size={18} />
+						</div>
+					</div>
+					<p id="stat-year" class="text-xl font-extrabold text-slate-900">-</p>
+					<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Kurulus</p>
+				</div>
+			</div>
+
+			<div id="about-section" class="hidden glass-card p-6 rounded-3xl">
+				<h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+					<Building2 size={16} />
+					Hakkinda
+				</h2>
+				<p id="description-text" class="text-sm text-slate-700 font-medium leading-relaxed"></p>
+				<div id="employee-info" class="hidden mt-4 pt-4 border-t border-slate-100">
+					<div class="flex items-center gap-2">
+						<Users size={16} class="text-slate-400" />
+						<span class="text-sm font-bold text-slate-600"><span id="employee-count"></span> Calisan</span>
+					</div>
+				</div>
+			</div>
+
+			<div id="certs-section" class="hidden glass-card p-6 rounded-3xl">
+				<h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+					<Award size={16} />
+					Sertifikalar
+				</h2>
+				<div id="certs-container" class="flex flex-wrap gap-2"></div>
+			</div>
+
+			<div id="website-section" class="hidden glass-card p-6 rounded-3xl">
+				<h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+					<Globe size={16} />
+					Web Sitesi
+				</h2>
+				<a id="website-link" href="" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-600 text-sm font-bold rounded-xl hover:bg-blue-100 transition-colors border border-blue-100">
+					<Globe size={16} />
+					<span id="website-url"></span>
+				</a>
+			</div>
+
+			<div id="ratings-section" class="hidden glass-card p-6 rounded-3xl">
+				<h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+					<Star size={16} />
+					Degerlendirmeler
+				</h2>
+				<div id="ratings-container" class="space-y-4"></div>
+				<div id="no-ratings" class="hidden text-center py-8">
+					<p class="text-slate-400 font-bold text-sm">Henuz degerlendirme bulunmuyor.</p>
+				</div>
+			</div>
+		</div>
+
+		<div id="error" class="hidden text-center py-20">
+			<div class="w-16 h-16 rounded-3xl bg-red-100 text-red-500 flex items-center justify-center mx-auto mb-4">
+				<Building2 size={32} />
+			</div>
+			<h2 class="text-xl font-extrabold text-slate-900 mb-2">Satici Bulunamadi</h2>
+			<p class="text-slate-500 font-medium">Bu satici profili mevcut degil veya kaldirilmis olabilir.</p>
+			<a href="javascript:history.back()" class="inline-block mt-6 btn-primary px-6 py-3">Geri Don</a>
+		</div>
+	</div>
+
+	<script is:inline>
+		const API_BASE = 'http://localhost:3001';
+		const sellerId = window.location.pathname.split('/').pop();
+
+		function renderStars(rating, size) {
+			let html = '';
+			const full = Math.floor(rating);
+			const half = rating - full >= 0.5;
+			for (let i = 1; i <= 5; i++) {
+				if (i <= full) {
+					html += '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="currentColor" class="text-yellow-400"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+				} else if (i === full + 1 && half) {
+					html += '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="currentColor" class="text-yellow-400" style="clip-path: inset(0 50% 0 0);"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+				} else {
+					html += '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="currentColor" class="text-slate-200"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+				}
+			}
+			return html;
+		}
+
+		async function loadShowcase() {
+			try {
+				const res = await fetch(API_BASE + '/api/seller/showcase/' + sellerId, { credentials: 'include' });
+				if (!res.ok) throw new Error('Not found');
+				const seller = await res.json();
+
+				document.getElementById('loading').classList.add('hidden');
+				document.getElementById('content').classList.remove('hidden');
+
+				document.getElementById('company-name').textContent = seller.company_name || seller.name;
+				document.getElementById('seller-name').textContent = seller.name || '';
+
+				if (seller.is_verified) {
+					document.getElementById('verified-badge').classList.remove('hidden');
+				}
+
+				if (seller.cover_image) {
+					document.getElementById('cover-image-container').classList.remove('hidden');
+					document.getElementById('cover-image').src = seller.cover_image;
+				}
+
+				if (seller.city) {
+					document.getElementById('city-badge').classList.remove('hidden');
+					document.getElementById('city-text').textContent = seller.city;
+				}
+
+				if (seller.sector) {
+					document.getElementById('sector-badge').classList.remove('hidden');
+					document.getElementById('sector-text').textContent = seller.sector;
+				}
+
+				if (seller.avg_rating) {
+					document.getElementById('stat-rating').textContent = parseFloat(seller.avg_rating).toFixed(1);
+				}
+				document.getElementById('stat-reviews').textContent = seller.rating_count || 0;
+				document.getElementById('stat-offers').textContent = seller.total_offers || 0;
+				if (seller.established_year) {
+					document.getElementById('stat-year').textContent = seller.established_year;
+				}
+
+				if (seller.description) {
+					document.getElementById('about-section').classList.remove('hidden');
+					document.getElementById('description-text').textContent = seller.description;
+				}
+
+				if (seller.employee_count) {
+					document.getElementById('employee-info').classList.remove('hidden');
+					document.getElementById('employee-count').textContent = seller.employee_count;
+				}
+
+				if (seller.certificates && seller.certificates.length > 0) {
+					document.getElementById('certs-section').classList.remove('hidden');
+					var certsHtml = seller.certificates.map(function(cert) {
+						return '<div class="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-xs font-bold border border-green-100">' +
+							'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>' +
+							cert + '</div>';
+					}).join('');
+					document.getElementById('certs-container').innerHTML = certsHtml;
+				}
+
+				if (seller.website) {
+					document.getElementById('website-section').classList.remove('hidden');
+					document.getElementById('website-link').href = seller.website.startsWith('http') ? seller.website : 'https://' + seller.website;
+					document.getElementById('website-url').textContent = seller.website.replace(/^https?:\/\//, '');
+				}
+
+				if (seller.ratings && seller.ratings.length > 0) {
+					document.getElementById('ratings-section').classList.remove('hidden');
+					var ratingsHtml = seller.ratings.map(function(r) {
+						var date = new Date(r.created_at).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' });
+						return '<div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">' +
+							'<div class="flex items-center justify-between mb-2">' +
+								'<div class="flex items-center gap-2">' +
+									'<div class="flex items-center gap-0.5">' + renderStars(r.rating, 14) + '</div>' +
+									'<span class="text-xs font-extrabold text-slate-900">' + r.rating + '/5</span>' +
+								'</div>' +
+								'<span class="text-[10px] font-bold text-slate-400">' + date + '</span>' +
+							'</div>' +
+							(r.comment ? '<p class="text-sm text-slate-600 font-medium mt-2">' + r.comment + '</p>' : '') +
+							(r.buyer_company ? '<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-3">' + r.buyer_company + '</p>' : '') +
+						'</div>';
+					}).join('');
+					document.getElementById('ratings-container').innerHTML = ratingsHtml;
+				} else {
+					document.getElementById('ratings-section').classList.remove('hidden');
+					document.getElementById('no-ratings').classList.remove('hidden');
+				}
+
+			} catch (err) {
+				console.error(err);
+				document.getElementById('loading').classList.add('hidden');
+				document.getElementById('error').classList.remove('hidden');
+			}
+		}
+
+		document.getElementById('fav-btn').onclick = async function() {
+			var btn = document.getElementById('fav-btn');
+			var text = document.getElementById('fav-text');
+			btn.disabled = true;
+			text.textContent = 'Ekleniyor...';
+
+			try {
+				var res = await fetch(API_BASE + '/api/buyer/favorites', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					credentials: 'include',
+					body: JSON.stringify({ seller_id: parseInt(sellerId) })
+				});
+
+				if (res.ok) {
+					btn.classList.remove('border-slate-200', 'text-slate-600', 'hover:border-red-300', 'hover:text-red-500', 'hover:bg-red-50');
+					btn.classList.add('border-red-300', 'text-red-500', 'bg-red-50');
+					text.textContent = 'Favorilerde';
+				} else {
+					var data = await res.json();
+					text.textContent = data.error || 'Hata olustu';
+					setTimeout(function() { text.textContent = 'Favorilere Ekle'; }, 2000);
+				}
+			} catch (err) {
+				text.textContent = 'Hata olustu';
+				setTimeout(function() { text.textContent = 'Favorilere Ekle'; }, 2000);
+			} finally {
+				btn.disabled = false;
+			}
+		};
+
+		loadShowcase();
+	</script>
+</Layout>

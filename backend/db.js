@@ -170,6 +170,65 @@ CREATE TABLE IF NOT EXISTS offer_analyses (
     score         INTEGER,
     created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS favorite_sellers (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    buyer_id      INTEGER REFERENCES users(id),
+    seller_id     INTEGER REFERENCES users(id),
+    note          TEXT DEFAULT '',
+    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(buyer_id, seller_id)
+);
+
+CREATE TABLE IF NOT EXISTS price_alerts (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    seller_id     INTEGER REFERENCES users(id),
+    category      TEXT NOT NULL,
+    min_price     REAL,
+    max_price     REAL,
+    is_active     INTEGER DEFAULT 1,
+    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS notification_preferences (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id       INTEGER REFERENCES users(id) UNIQUE,
+    email_new_offer     INTEGER DEFAULT 1,
+    email_new_request   INTEGER DEFAULT 1,
+    email_question      INTEGER DEFAULT 1,
+    email_status_change INTEGER DEFAULT 1,
+    email_daily_summary INTEGER DEFAULT 1,
+    app_new_offer       INTEGER DEFAULT 1,
+    app_new_request     INTEGER DEFAULT 1,
+    app_question        INTEGER DEFAULT 1,
+    app_status_change   INTEGER DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id       INTEGER REFERENCES users(id),
+    action        TEXT NOT NULL,
+    entity_type   TEXT NOT NULL,
+    entity_id     INTEGER,
+    details       TEXT,
+    ip_address    TEXT,
+    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS seller_profiles (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    seller_id     INTEGER REFERENCES users(id) UNIQUE,
+    description   TEXT DEFAULT '',
+    website       TEXT DEFAULT '',
+    city          TEXT DEFAULT '',
+    sector        TEXT DEFAULT '',
+    established_year INTEGER,
+    employee_count TEXT DEFAULT '',
+    certificates  TEXT DEFAULT '[]',
+    cover_image   TEXT DEFAULT '',
+    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at    DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 `);
 
 db.exec(`
@@ -195,6 +254,15 @@ CREATE INDEX IF NOT EXISTS idx_user_assets_user_id ON user_assets(user_id);
 CREATE INDEX IF NOT EXISTS idx_request_attachments_request_id ON request_attachments(request_id);
 CREATE INDEX IF NOT EXISTS idx_offer_attachments_offer_id ON offer_attachments(offer_id);
 CREATE INDEX IF NOT EXISTS idx_offer_analyses_offer_id ON offer_analyses(offer_id);
+CREATE INDEX IF NOT EXISTS idx_favorite_sellers_buyer_id ON favorite_sellers(buyer_id);
+CREATE INDEX IF NOT EXISTS idx_favorite_sellers_seller_id ON favorite_sellers(seller_id);
+CREATE INDEX IF NOT EXISTS idx_price_alerts_seller_id ON price_alerts(seller_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_seller_profiles_seller_id ON seller_profiles(seller_id);
+CREATE INDEX IF NOT EXISTS idx_messages_offer_id ON messages(offer_id);
+CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON messages(sender_id);
 `);
 
 try {
@@ -225,6 +293,18 @@ try {
     }
 } catch (err) {
     console.error("Migration error (request_item_id):", err);
+}
+
+try {
+    const tableInfo = db.prepare("PRAGMA table_info(users)").all();
+    if (!tableInfo.find(c => c.name === 'locale')) {
+        db.exec("ALTER TABLE users ADD COLUMN locale TEXT DEFAULT 'tr'");
+    }
+    if (!tableInfo.find(c => c.name === 'theme')) {
+        db.exec("ALTER TABLE users ADD COLUMN theme TEXT DEFAULT 'light'");
+    }
+} catch (err) {
+    console.error("Migration error (locale/theme):", err);
 }
 
 const adminEmail = 'admin@fiyatal.com';

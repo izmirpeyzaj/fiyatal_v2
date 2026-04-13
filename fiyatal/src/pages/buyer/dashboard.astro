@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { Plus, Clock, ShoppingBag, MessageSquare, ChevronRight } from 'lucide-astro';
+import { Plus, Clock, ShoppingBag, MessageSquare, ChevronRight, Heart, TrendingUp, BarChart3, CheckCircle, X, Settings } from 'lucide-astro';
 ---
 
 <Layout title="Alıcı Paneli" role="buyer">
@@ -20,6 +20,48 @@ import { Plus, Clock, ShoppingBag, MessageSquare, ChevronRight } from 'lucide-as
 					Yeni Talep Oluştur
 				</a>
 			</div>
+		</div>
+
+		<div id="stats-section" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+			<div class="stat-card rounded-2xl">
+				<div class="flex items-center gap-3 mb-2">
+					<div class="p-2 bg-blue-50 text-blue-600 rounded-xl"><ShoppingBag size={18} /></div>
+					<p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Toplam Talep</p>
+				</div>
+				<p id="stat-total" class="text-2xl font-black text-slate-900">--</p>
+			</div>
+			<div class="stat-card rounded-2xl">
+				<div class="flex items-center gap-3 mb-2">
+					<div class="p-2 bg-green-50 text-green-600 rounded-xl"><CheckCircle size={18} /></div>
+					<p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aktif</p>
+				</div>
+				<p id="stat-active" class="text-2xl font-black text-green-600">--</p>
+			</div>
+			<div class="stat-card rounded-2xl">
+				<div class="flex items-center gap-3 mb-2">
+					<div class="p-2 bg-orange-50 text-orange-600 rounded-xl"><MessageSquare size={18} /></div>
+					<p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Gelen Teklif</p>
+				</div>
+				<p id="stat-offers" class="text-2xl font-black text-orange-600">--</p>
+			</div>
+			<div class="stat-card rounded-2xl">
+				<div class="flex items-center gap-3 mb-2">
+					<div class="p-2 bg-sky-50 text-sky-600 rounded-xl"><TrendingUp size={18} /></div>
+					<p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ort. Teklif/Talep</p>
+				</div>
+				<p id="stat-avg" class="text-2xl font-black text-sky-600">--</p>
+			</div>
+		</div>
+
+		<div class="flex gap-3 mb-6 overflow-x-auto pb-2">
+			<a href="/buyer/favorites" class="btn-secondary flex items-center gap-2 whitespace-nowrap">
+				<Heart size={16} />
+				Favorilerim
+			</a>
+			<a href="/buyer/preferences" class="btn-secondary flex items-center gap-2 whitespace-nowrap">
+				<Settings size={16} />
+				Bildirim Tercihleri
+			</a>
 		</div>
 
 		<div class="flex flex-col md:flex-row gap-4 mb-8">
@@ -58,62 +100,34 @@ import { Plus, Clock, ShoppingBag, MessageSquare, ChevronRight } from 'lucide-as
 		async function loadRequests() {
 			try {
 				const res = await fetch(`${API_BASE}/api/buyer/requests`, { credentials: 'include' });
-				const requests = await res.json();
+				allRequests = await res.json();
 
-				if (requests.length === 0) {
+				if (allRequests.length === 0) {
 					listContainer.classList.add('hidden');
 					emptyState.classList.remove('hidden');
 					return;
 				}
 
-				listContainer.innerHTML = requests.map(req => `
-					<div class="glass-card p-6 rounded-2xl group hover:shadow-2xl hover:border-blue-200 transition-all duration-300">
-						<div class="flex justify-between items-start mb-4">
-							<span class="px-3 py-1 rounded-full text-xs font-bold ${req.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}">
-								${req.status === 'active' ? 'AKTİF' : 'KAPALI'}
-							</span>
-							<div class="flex flex-col items-end gap-1">
-								<div class="flex items-center gap-1 text-slate-400 text-[10px] font-medium">
-									<Clock size={12} />
-									${new Date(req.created_at).toLocaleDateString('tr-TR')}
-								</div>
-								${req.expires_at ? `
-									<div class="countdown-timer text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 mt-1" data-expires="${req.expires_at}">
-										Yükleniyor...
-									</div>
-								` : ''}
-							</div>
-						</div>
-						
-						<h2 class="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors mb-4">${req.title}</h2>
-						
-						<div class="grid grid-cols-2 gap-4 mb-6">
-							<div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-								<p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Ürün Sayısı</p>
-								<p class="text-xl font-extrabold text-slate-900">${req.item_count}</p>
-							</div>
-							<div class="bg-blue-50 p-3 rounded-xl border border-blue-100">
-								<p class="text-[10px] text-blue-500 font-bold uppercase tracking-wider mb-1">Gelen Teklif</p>
-								<p class="text-xl font-extrabold text-blue-600">${req.offer_count}</p>
-							</div>
-						</div>
-
-						<div class="flex items-center gap-3">
-							<a href="/buyer/requests/${req.id}/offers" class="flex-grow btn-primary flex items-center justify-center gap-2">
-								<MessageSquare size={18} />
-								Teklifleri Gör
-							</a>
-							<button onclick="closeRequest(${req.id})" class="p-2 text-slate-400 hover:text-red-600 transition-colors" title="Talebi Kapat">
-								<X size={20} />
-							</button>
-						</div>
-					</div>
-				`).join('');
+				emptyState.classList.add('hidden');
+				listContainer.classList.remove('hidden');
+				renderRequests(allRequests);
 			} catch (err) {
-				console.error('Talepler yüklenemedi:', err);
+				console.error('Talepler yuklenemedi:', err);
 			}
 		}
 
+		async function loadStats() {
+			try {
+				const res = await fetch(`${API_BASE}/api/buyer/stats`, { credentials: 'include' });
+				const s = await res.json();
+				document.getElementById('stat-total').textContent = s.totalRequests;
+				document.getElementById('stat-active').textContent = s.activeRequests;
+				document.getElementById('stat-offers').textContent = s.totalOffers;
+				document.getElementById('stat-avg').textContent = s.avgOffersPerRequest;
+			} catch (e) {}
+		}
+
+		loadStats();
 		loadRequests().then(startCountdown);
 
 		function startCountdown() {
@@ -143,5 +157,66 @@ import { Plus, Clock, ShoppingBag, MessageSquare, ChevronRight } from 'lucide-as
 				});
 			}, 1000);
 		}
+		let allRequests = [];
+
+		document.getElementById('buyer-search').addEventListener('input', filterRequests);
+		document.getElementById('buyer-status-filter').addEventListener('change', filterRequests);
+
+		function filterRequests() {
+			const q = document.getElementById('buyer-search').value.toLowerCase();
+			const status = document.getElementById('buyer-status-filter').value;
+			const filtered = allRequests.filter(r => {
+				const matchQ = !q || r.title.toLowerCase().includes(q);
+				const matchS = status === 'all' || r.status === status;
+				return matchQ && matchS;
+			});
+			renderRequests(filtered);
+		}
+
+		function renderRequests(requests) {
+			if (requests.length === 0) {
+				listContainer.innerHTML = '<div class="col-span-2 text-center py-10 text-slate-400 font-bold">Sonuc bulunamadi.</div>';
+				return;
+			}
+			listContainer.innerHTML = requests.map(req => `
+				<div class="glass-card p-6 rounded-2xl group hover:shadow-2xl hover:border-blue-200 transition-all duration-300 fade-in">
+					<div class="flex justify-between items-start mb-4">
+						<span class="px-3 py-1 rounded-full text-xs font-bold ${req.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}">
+							${req.status === 'active' ? 'AKTIF' : 'KAPALI'}
+						</span>
+						<div class="flex flex-col items-end gap-1">
+							<div class="flex items-center gap-1 text-slate-400 text-[10px] font-medium">
+								${new Date(req.created_at).toLocaleDateString('tr-TR')}
+							</div>
+							${req.expires_at ? '<div class="countdown-timer text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 mt-1" data-expires="' + req.expires_at + '">...</div>' : ''}
+						</div>
+					</div>
+					<h2 class="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors mb-4">${req.title}</h2>
+					<div class="grid grid-cols-2 gap-4 mb-6">
+						<div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+							<p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Urun Sayisi</p>
+							<p class="text-xl font-extrabold text-slate-900">${req.item_count}</p>
+						</div>
+						<div class="bg-blue-50 p-3 rounded-xl border border-blue-100">
+							<p class="text-[10px] text-blue-500 font-bold uppercase tracking-wider mb-1">Gelen Teklif</p>
+							<p class="text-xl font-extrabold text-blue-600">${req.offer_count}</p>
+						</div>
+					</div>
+					<div class="flex items-center gap-3">
+						<a href="/buyer/requests/${req.id}/offers" class="flex-grow btn-primary flex items-center justify-center gap-2">Teklifleri Gor</a>
+						${req.status === 'active' ? '<button onclick="closeRequest(' + req.id + ')" class="p-2 text-slate-400 hover:text-red-600 transition-colors" title="Talebi Kapat">&#10005;</button>' : ''}
+					</div>
+				</div>
+			`).join('');
+		}
+
+		window.closeRequest = async function(id) {
+			if (!confirm('Bu talebi kapatmak istediginize emin misiniz?')) return;
+			try {
+				await fetch(`${API_BASE}/api/admin/requests/${id}/status`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({status:'closed'}), credentials: 'include' });
+				loadRequests().then(startCountdown);
+				loadStats();
+			} catch (e) {}
+		};
 	</script>
 </Layout>

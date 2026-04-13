@@ -174,4 +174,74 @@ router.post('/offers/:id/analyze', requireAuth, requireRole('buyer'), asyncHandl
     });
 }));
 
+router.get('/messages/:offerId', requireAuth, (req, res) => {
+    const offer = db.prepare('SELECT o.seller_id, r.buyer_id FROM offers o JOIN requests r ON o.request_id = r.id WHERE o.id = ?').get(req.params.offerId);
+    if (!offer) return res.status(404).json({ error: 'Teklif bulunamadi.' });
+    if (req.session.userId !== offer.seller_id && req.session.userId !== offer.buyer_id) {
+        return res.status(403).json({ error: 'Bu mesajlara erisim yetkiniz yok.' });
+    }
+
+    const messages = db.prepare(`
+        SELECT m.*, u.name as sender_name, u.role as sender_role, u.company_name as sender_company
+        FROM messages m
+        JOIN users u ON m.sender_id = u.id
+        WHERE m.offer_id = ?
+        ORDER BY m.created_at ASC
+    `).all(req.params.offerId);
+    res.json(messages);
+});
+
+router.post('/messages/:offerId', requireAuth, (req, res) => {
+    const { message } = req.body;
+    if (!message || message.trim().length < 1) {
+        return res.status(400).json({ error: 'Mesaj bos olamaz.' });
+    }
+
+    const offer = db.prepare('SELECT o.seller_id, r.buyer_id, r.title FROM offers o JOIN requests r ON o.request_id = r.id WHERE o.id = ?').get(req.params.offerId);
+    if (!offer) return res.status(404).json({ error: 'Teklif bulunamadi.' });
+    if (req.session.userId !== offer.seller_id && req.session.userId !== offer.buyer_id) {
+        return res.status(403).json({ error: 'Bu teklif uzerinde mesaj gonderme yetkiniz yok.' });
+    }
+
+    const result = db.prepare('INSERT INTO messages (offer_id, sender_id, message) VALUES (?, ?, ?)').run(req.params.offerId, req.session.userId, message.trim());
+
+    const recipientId = req.session.userId === offer.buyer_id ? offer.seller_id : offer.buyer_id;
+    notificationService.createNotification(recipientId, 'Yeni Mesaj', `"${offer.title}" teklifi hakkinda yeni bir mesaj aldiniz.`, null, false);
+
+    res.json({ success: true, id: result.lastInsertRowid });
+});
+
+router.get('/users/preferences', requireAuth, (req, res) => {
+    let prefs = db.prepare('SELECT * FROM notification_preferences WHERE user_id = ?').get(req.session.userId);
+    if (!prefs) {
+        db.prepare('INSERT INTO notification_preferences (user_id) VALUES (?)').run(req.session.userId);
+        prefs = db.prepare('SELECT * FROM notification_preferences WHERE user_id = ?').get(req.session.userId);
+    }
+    res.json(prefs);
+});
+
+router.put('/users/preferences', requireAuth, (req, res) => {
+    const fields = ['email_new_offer', 'email_new_request', 'email_question', 'email_status_change', 'email_daily_summary', 'app_new_offer', 'app_new_request', 'app_question', 'app_status_change'];
+    const existing = db.prepare('SELECT id FROM notification_preferences WHERE user_id = ?').get(req.session.userId);
+    if (!existing) {
+        db.prepare('INSERT INTO notification_preferences (user_id) VALUES (?)').run(req.session.userId);
+    }
+    fields.forEach(f => {
+        if (req.body[f] !== undefined) {
+            db.prepare(`UPDATE notification_preferences SET ${f} = ? WHERE user_id = ?`).run(req.body[f] ? 1 : 0, req.session.userId);
+        }
+    });
+    res.json({ success: true });
+});
+
+router.put('/users/profile', requireAuth, (req, res) => {
+    const { name, phone, company_name, locale, theme } = req.body;
+    if (name) db.prepare('UPDATE users SET name = ? WHERE id = ?').run(name, req.session.userId);
+    if (phone !== undefined) db.prepare('UPDATE users SET phone = ? WHERE id = ?').run(phone, req.session.userId);
+    if (company_name) db.prepare('UPDATE users SET company_name = ? WHERE id = ?').run(company_name, req.session.userId);
+    if (locale) db.prepare('UPDATE users SET locale = ? WHERE id = ?').run(locale, req.session.userId);
+    if (theme) db.prepare('UPDATE users SET theme = ? WHERE id = ?').run(theme, req.session.userId);
+    res.json({ success: true });
+});
+
 module.exports = router;

@@ -192,4 +192,43 @@ router.post('/debug/daily-summary', requireAuth, requireRole('admin'), asyncHand
     res.json({ success: true, sentCount });
 }));
 
+router.get('/audit-logs', requireAuth, requireRole('admin'), (req, res) => {
+    const { user_id, action, entity_type, limit: lim } = req.query;
+    let query = `SELECT al.*, u.name as user_name, u.email as user_email FROM audit_logs al LEFT JOIN users u ON al.user_id = u.id WHERE 1=1`;
+    const params = [];
+    if (user_id) { query += " AND al.user_id = ?"; params.push(user_id); }
+    if (action) { query += " AND al.action = ?"; params.push(action); }
+    if (entity_type) { query += " AND al.entity_type = ?"; params.push(entity_type); }
+    query += ` ORDER BY al.created_at DESC LIMIT ?`;
+    params.push(parseInt(lim) || 100);
+    res.json(db.prepare(query).all(...params));
+});
+
+router.get('/stats/detailed', requireAuth, requireRole('admin'), (req, res) => {
+    const totalUsers = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
+    const totalRequests = db.prepare('SELECT COUNT(*) as count FROM requests').get().count;
+    const totalOffers = db.prepare('SELECT COUNT(*) as count FROM offers').get().count;
+    const acceptedOffers = db.prepare("SELECT COUNT(*) as count FROM offers WHERE status = 'accepted'").get().count;
+    const avgRating = db.prepare('SELECT AVG(rating) as avg FROM seller_ratings').get().avg || 0;
+    const totalMessages = db.prepare('SELECT COUNT(*) as count FROM messages').get().count;
+
+    const monthlyData = db.prepare(`
+        SELECT strftime('%Y-%m', r.created_at) as month,
+        COUNT(DISTINCT r.id) as requests, COUNT(DISTINCT o.id) as offers,
+        COUNT(DISTINCT CASE WHEN o.status = 'accepted' THEN o.id END) as accepted
+        FROM requests r LEFT JOIN offers o ON r.id = o.request_id
+        GROUP BY month ORDER BY month DESC LIMIT 6
+    `).all();
+
+    const topSellers = db.prepare(`
+        SELECT u.id, u.company_name, COUNT(o.id) as offer_count,
+        SUM(CASE WHEN o.status = 'accepted' THEN 1 ELSE 0 END) as accepted_count,
+        (SELECT AVG(rating) FROM seller_ratings WHERE seller_id = u.id) as avg_rating
+        FROM users u JOIN offers o ON u.id = o.seller_id WHERE u.role = 'seller'
+        GROUP BY u.id ORDER BY accepted_count DESC LIMIT 10
+    `).all();
+
+    res.json({ totalUsers, totalRequests, totalOffers, acceptedOffers, avgRating: parseFloat(avgRating).toFixed(1), totalMessages, monthlyData: monthlyData.reverse(), topSellers });
+});
+
 module.exports = router;

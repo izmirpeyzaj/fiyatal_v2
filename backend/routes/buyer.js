@@ -373,4 +373,72 @@ router.get('/projects', requireAuth, requireRole('buyer'), (req, res) => {
     res.json(projects);
 });
 
+router.get('/favorites', requireAuth, requireRole('buyer'), (req, res) => {
+    const favorites = db.prepare(`
+        SELECT fs.*, u.name, u.company_name, u.email, u.phone, u.is_verified,
+        (SELECT AVG(rating) FROM seller_ratings WHERE seller_id = fs.seller_id) as avg_rating,
+        (SELECT COUNT(*) FROM seller_ratings WHERE seller_id = fs.seller_id) as rating_count,
+        (SELECT COUNT(*) FROM offers WHERE seller_id = fs.seller_id) as total_offers
+        FROM favorite_sellers fs
+        JOIN users u ON fs.seller_id = u.id
+        WHERE fs.buyer_id = ?
+        ORDER BY fs.created_at DESC
+    `).all(req.session.userId);
+    res.json(favorites);
+});
+
+router.post('/favorites', requireAuth, requireRole('buyer'), (req, res) => {
+    const { seller_id, note } = req.body;
+    if (!seller_id) return res.status(400).json({ error: 'Satici ID gereklidir.' });
+    try {
+        db.prepare('INSERT OR IGNORE INTO favorite_sellers (buyer_id, seller_id, note) VALUES (?, ?, ?)').run(req.session.userId, seller_id, note || '');
+        res.json({ success: true });
+    } catch (err) {
+        res.status(400).json({ error: 'Bu satici zaten favorilerinizde.' });
+    }
+});
+
+router.delete('/favorites/:sellerId', requireAuth, requireRole('buyer'), (req, res) => {
+    db.prepare('DELETE FROM favorite_sellers WHERE buyer_id = ? AND seller_id = ?').run(req.session.userId, req.params.sellerId);
+    res.json({ success: true });
+});
+
+router.post('/requests/:id/extend', requireAuth, requireRole('buyer'), (req, res) => {
+    const { new_expires_at } = req.body;
+    if (!new_expires_at) return res.status(400).json({ error: 'Yeni bitis tarihi gereklidir.' });
+
+    const request = db.prepare('SELECT * FROM requests WHERE id = ? AND buyer_id = ?').get(req.params.id, req.session.userId);
+    if (!request) return res.status(404).json({ error: 'Talep bulunamadi.' });
+
+    db.prepare('UPDATE requests SET expires_at = ?, status = ? WHERE id = ?').run(new_expires_at, 'active', req.params.id);
+
+    const sellers = db.prepare('SELECT DISTINCT seller_id FROM offers WHERE request_id = ?').all(req.params.id);
+    sellers.forEach(s => {
+        notificationService.createNotification(s.seller_id, 'Talep Suresi Uzatildi', `"${request.title}" talebinin suresi uzatildi.`, `/seller/requests/${req.params.id}`, true);
+    });
+
+    res.json({ success: true });
+});
+
+router.get('/stats', requireAuth, requireRole('buyer'), (req, res) => {
+    const userId = req.session.userId;
+    const totalRequests = db.prepare('SELECT COUNT(*) as count FROM requests WHERE buyer_id = ?').get(userId).count;
+    const activeRequests = db.prepare("SELECT COUNT(*) as count FROM requests WHERE buyer_id = ? AND status = 'active'").get(userId).count;
+    const totalOffers = db.prepare('SELECT COUNT(*) as count FROM offers o JOIN requests r ON o.request_id = r.id WHERE r.buyer_id = ?').get(userId).count;
+    const avgOffersPerRequest = totalRequests > 0 ? (totalOffers / totalRequests).toFixed(1) : 0;
+    const acceptedOffers = db.prepare("SELECT COUNT(*) as count FROM offers o JOIN requests r ON o.request_id = r.id WHERE r.buyer_id = ? AND o.status = 'accepted'").get(userId).count;
+
+    const monthlyData = db.prepare(`
+        SELECT strftime('%Y-%m', r.created_at) as month,
+        COUNT(DISTINCT r.id) as requests,
+        COUNT(DISTINCT o.id) as offers
+        FROM requests r
+        LEFT JOIN offers o ON r.id = o.request_id
+        WHERE r.buyer_id = ?
+        GROUP BY month ORDER BY month DESC LIMIT 6
+    `).all(userId);
+
+    res.json({ totalRequests, activeRequests, totalOffers, avgOffersPerRequest, acceptedOffers, monthlyData: monthlyData.reverse() });
+});
+
 module.exports = router;

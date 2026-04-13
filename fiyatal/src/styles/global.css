@@ -7,11 +7,17 @@
   --color-bg-main: #F8FAFC;
 }
 
-/* Simplified base and components to avoid circular re-processing if any */
 body {
   background-color: #F8FAFC;
   color: #0F172A;
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.dark body,
+body.dark {
+  background-color: #0F172A;
+  color: #E2E8F0;
 }
 
 .glass-card {
@@ -19,6 +25,12 @@ body {
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.dark .glass-card {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(51, 65, 85, 0.5);
 }
 
 .btn-primary {
@@ -32,6 +44,58 @@ body {
 
 .btn-primary:hover {
   background-color: #1E40AF;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.btn-secondary {
+  background-color: #F1F5F9;
+  color: #334155;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #E2E8F0;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: #E2E8F0;
+}
+
+.dark .btn-secondary {
+  background-color: #1E293B;
+  color: #CBD5E1;
+  border-color: #334155;
+}
+
+.dark .btn-secondary:hover {
+  background-color: #334155;
+}
+
+.btn-danger {
+  background-color: #EF4444;
+  color: white;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+}
+
+.btn-danger:hover {
+  background-color: #DC2626;
+}
+
+.btn-success {
+  background-color: #10B981;
+  color: white;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+}
+
+.btn-success:hover {
+  background-color: #059669;
 }
 
 .input-field {
@@ -41,4 +105,110 @@ body {
   border-radius: 0.5rem;
   padding: 0.5rem 1rem;
   outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.3s;
+}
+
+.input-field:focus {
+  border-color: #2563EB;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.dark .input-field {
+  background-color: #1E293B;
+  border-color: #334155;
+  color: #E2E8F0;
+}
+
+.dark .input-field:focus {
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.dark nav {
+  background-color: rgba(15, 23, 42, 0.8) !important;
+  border-color: #1E293B !important;
+}
+
+.dark .bg-white { background-color: #1E293B; }
+.dark .bg-slate-50 { background-color: #0F172A; }
+.dark .bg-slate-100 { background-color: #1E293B; }
+.dark .bg-blue-50 { background-color: rgba(30, 58, 138, 0.3); }
+.dark .bg-green-50 { background-color: rgba(6, 78, 59, 0.3); }
+.dark .bg-red-50 { background-color: rgba(127, 29, 29, 0.3); }
+
+.dark .text-slate-900 { color: #F1F5F9; }
+.dark .text-slate-800 { color: #E2E8F0; }
+.dark .text-slate-700 { color: #CBD5E1; }
+.dark .text-slate-600 { color: #94A3B8; }
+.dark .text-slate-500 { color: #64748B; }
+
+.dark .border-slate-200 { border-color: #334155; }
+.dark .border-slate-100 { border-color: #1E293B; }
+
+.stat-card {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  border: 1px solid #E2E8F0;
+  transition: all 0.3s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1);
+}
+
+.dark .stat-card {
+  background: #1E293B;
+  border-color: #334155;
+}
+
+.chart-bar {
+  background: linear-gradient(to top, #2563EB, #3B82F6);
+  border-radius: 0.25rem 0.25rem 0 0;
+  transition: height 0.5s ease-out;
+  min-width: 2rem;
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-up {
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.message-bubble {
+  max-width: 75%;
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.message-bubble.sent {
+  background-color: #2563EB;
+  color: white;
+  border-bottom-right-radius: 0.25rem;
+  margin-left: auto;
+}
+
+.message-bubble.received {
+  background-color: #F1F5F9;
+  color: #334155;
+  border-bottom-left-radius: 0.25rem;
+}
+
+.dark .message-bubble.received {
+  background-color: #334155;
+  color: #E2E8F0;
 }

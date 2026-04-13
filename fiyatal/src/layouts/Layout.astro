@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-import { LogOut, User, Menu, X, Bell } from 'lucide-astro';
+import { LogOut, User, X, Bell, Moon, Sun, Home, FileText, BarChart3, Heart, Settings } from 'lucide-astro';
 
 interface Props {
 	title: string;
@@ -19,50 +19,53 @@ const { title, role } = Astro.props;
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{title} | FiyatAl</title>
-		<!-- Google Fonts -->
 		<link rel="preconnect" href="https://fonts.googleapis.com">
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-		
-		<!-- PWA Meta Tags -->
-		<meta name="mobile-web-app-capable" content="yes">
-		<meta name="apple-mobile-web-app-capable" content="yes">
-		<meta name="apple-mobile-web-app-status-bar-style" content="default">
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 		<meta name="theme-color" content="#2563EB">
-
-		<!-- Leaflet CSS -->
 		<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+		<script is:inline>
+			(function() {
+				var t = localStorage.getItem('theme');
+				if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+					document.documentElement.classList.add('dark');
+				}
+			})();
+		</script>
 	</head>
-	<body class="min-h-screen flex flex-col">
+	<body class="min-h-screen flex flex-col" style="font-family: 'Inter', system-ui, sans-serif;">
 		{role && (
 			<nav class="bg-white/80 backdrop-blur-lg border-b border-slate-200 sticky top-0 z-50">
 				<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 					<div class="flex justify-between h-16 items-center">
-						<div class="flex items-center gap-2">
-							<a href={`/${role}/dashboard`} class="text-2xl font-bold text-blue-600 tracking-tight">
-								Fiyat<span class="text-slate-900">Al</span>
-							</a>
-							{role === 'admin' && <span class="bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">ADMIN</span>}
-						</div>
+						<a href={`/${role}/dashboard`} class="text-2xl font-extrabold text-blue-600 tracking-tight">
+							Fiyat<span class="text-slate-900">Al</span>
+							{role === 'admin' && <span class="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full ml-2 align-middle">ADMIN</span>}
+						</a>
 
-						<div class="hidden md:flex items-center gap-6">
+						<div class="hidden md:flex items-center gap-3">
+							<button id="theme-toggle" class="text-slate-500 hover:text-blue-600 transition-colors p-2 hover:bg-slate-100 rounded-full" title="Tema">
+								<Moon size={18} id="icon-moon" />
+								<Sun size={18} id="icon-sun" class="hidden" />
+							</button>
 							<button id="noti-bell" class="relative text-slate-600 hover:text-blue-600 transition-colors p-2 hover:bg-slate-100 rounded-full">
 								<Bell size={20} />
 								<span id="noti-badge" class="hidden absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
 							</button>
 							<div class="flex items-center gap-2 text-slate-600 bg-slate-100 px-3 py-1.5 rounded-full">
 								<User size={16} />
-								<span class="text-sm font-medium" id="nav-user-name">Yükleniyor...</span>
+								<span class="text-sm font-medium" id="nav-user-name">...</span>
 							</div>
 							<button id="logout-btn" class="flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-red-600 transition-colors">
 								<LogOut size={18} />
-								Çıkış
 							</button>
 						</div>
 
-						<div class="md:hidden flex items-center">
-							<button id="mobile-menu-btn" class="text-slate-600">
-								<Menu size={24} />
+						<div class="md:hidden flex items-center gap-1">
+							<button id="theme-toggle-mobile" class="text-slate-500 p-2"><Moon size={18} /></button>
+							<button id="noti-bell-mobile" class="relative text-slate-600 p-2">
+								<Bell size={18} />
+								<span id="noti-badge-mobile" class="hidden absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
 							</button>
 						</div>
 					</div>
@@ -70,91 +73,108 @@ const { title, role } = Astro.props;
 			</nav>
 		)}
 
-		<!-- Notification Drawer -->
-		<div id="noti-drawer" class="fixed inset-y-0 right-0 w-80 bg-white/90 backdrop-blur-xl border-l border-slate-200 shadow-2xl translate-x-full transition-transform duration-300 z-[60] flex flex-col">
+		<div id="noti-drawer" class="fixed inset-y-0 right-0 w-80 bg-white/95 backdrop-blur-xl border-l border-slate-200 shadow-2xl translate-x-full transition-transform duration-300 z-[60] flex flex-col">
 			<div class="p-4 border-b border-slate-200 flex justify-between items-center">
-				<h3 class="font-bold text-slate-800 flex items-center gap-2">
-					<Bell size={20} class="text-blue-600" />
-					Bildirimler
-				</h3>
-				<button id="noti-close" class="text-slate-400 hover:text-slate-600">
-					<X size={20} />
-				</button>
+				<h3 class="font-bold text-slate-800 flex items-center gap-2"><Bell size={20} class="text-blue-600" /> Bildirimler</h3>
+				<button id="noti-close" class="text-slate-400 hover:text-slate-600"><X size={20} /></button>
 			</div>
-			<div id="noti-list" class="flex-grow overflow-y-auto p-4 space-y-4">
-				<div class="text-center py-10 text-slate-400 text-sm">Bildirimler yükleniyor...</div>
+			<div id="noti-list" class="flex-grow overflow-y-auto p-4 space-y-3">
+				<div class="text-center py-10 text-slate-400 text-sm">Yukleniyor...</div>
 			</div>
 			<div class="p-4 border-t border-slate-200">
-				<button id="noti-read-all" class="text-sm text-blue-600 font-semibold hover:underline w-full text-center">
-					Tümünü Okundu İşaretle
-				</button>
+				<button id="noti-read-all" class="text-sm text-blue-600 font-semibold hover:underline w-full text-center">Tumunu Okundu Isaretle</button>
 			</div>
 		</div>
 		<div id="noti-overlay" class="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-[55] hidden"></div>
 
-		<main class="flex-grow">
+		<main class="flex-grow pb-20 md:pb-0">
 			<slot />
 		</main>
 
-		{role === 'seller' && (
-			<div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around py-3 z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
-				<a href="/seller/dashboard" class="flex flex-col items-center gap-1 text-blue-600">
-					<Menu size={20} />
-					<span class="text-[10px] font-bold">Talepler</span>
-				</a>
-				<a href="/seller/history" class="flex flex-col items-center gap-1 text-slate-400">
-					<LogOut size={20} class="rotate-180" />
-					<span class="text-[10px] font-medium">Tekliflerim</span>
-				</a>
-				<a href="/seller/profile" class="flex flex-col items-center gap-1 text-slate-400">
-					<User size={20} />
-					<span class="text-[10px] font-medium">Profil</span>
-				</a>
+		{role && (
+			<div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around py-2.5 z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+				{role === 'buyer' && (
+					<>
+						<a href="/buyer/dashboard" class="flex flex-col items-center gap-0.5 text-blue-600"><Home size={20} /><span class="text-[10px] font-bold">Talepler</span></a>
+						<a href="/buyer/favorites" class="flex flex-col items-center gap-0.5 text-slate-400"><Heart size={20} /><span class="text-[10px]">Favoriler</span></a>
+						<a href="/buyer/profile" class="flex flex-col items-center gap-0.5 text-slate-400"><User size={20} /><span class="text-[10px]">Profil</span></a>
+					</>
+				)}
+				{role === 'seller' && (
+					<>
+						<a href="/seller/dashboard" class="flex flex-col items-center gap-0.5 text-blue-600"><Home size={20} /><span class="text-[10px] font-bold">Talepler</span></a>
+						<a href="/seller/history" class="flex flex-col items-center gap-0.5 text-slate-400"><FileText size={20} /><span class="text-[10px]">Tekliflerim</span></a>
+						<a href="/seller/profile" class="flex flex-col items-center gap-0.5 text-slate-400"><User size={20} /><span class="text-[10px]">Profil</span></a>
+					</>
+				)}
+				{role === 'admin' && (
+					<>
+						<a href="/admin/dashboard" class="flex flex-col items-center gap-0.5 text-blue-600"><BarChart3 size={20} /><span class="text-[10px] font-bold">Panel</span></a>
+						<a href="/admin/requests" class="flex flex-col items-center gap-0.5 text-slate-400"><FileText size={20} /><span class="text-[10px]">Talepler</span></a>
+						<a href="/admin/settings" class="flex flex-col items-center gap-0.5 text-slate-400"><Settings size={20} /><span class="text-[10px]">Ayarlar</span></a>
+					</>
+				)}
 			</div>
 		)}
 
 		<script is:inline>
-			const API_BASE = 'http://localhost:3001';
+			var API_BASE = 'http://localhost:3001';
 
-			const userNameDisplay = document.getElementById('nav-user-name');
-			const logoutBtn = document.getElementById('logout-btn');
+			var userNameDisplay = document.getElementById('nav-user-name');
+			var logoutBtn = document.getElementById('logout-btn');
 
 			fetch(API_BASE + '/api/auth/me', { credentials: 'include' })
-				.then(res => res.json())
-				.then(data => {
+				.then(function(r) { return r.json(); })
+				.then(function(data) {
 					if (data.authenticated) {
 						if (userNameDisplay) userNameDisplay.textContent = data.user.name;
 					} else {
-						if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+						var p = window.location.pathname;
+						if (p !== '/login' && p !== '/register' && p !== '/') {
 							window.location.href = '/login';
 						}
 					}
 				});
 
 			if (logoutBtn) {
-				logoutBtn.onclick = async () => {
-					await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' });
-					window.location.href = '/login';
+				logoutBtn.onclick = function() {
+					fetch(API_BASE + '/api/auth/logout', { method: 'POST', credentials: 'include' })
+						.then(function() { window.location.href = '/login'; });
 				};
 			}
 
-			// Mobile Menu Toggle
-			const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-			if (mobileMenuBtn) {
-				mobileMenuBtn.onclick = () => {
-					// Minimal implementation for demo
-					alert("Menü: Profili Görüntüle veya Çıkış Yapabilirsiniz.");
-				};
-			}
+			(function initTheme() {
+				var toggles = [document.getElementById('theme-toggle'), document.getElementById('theme-toggle-mobile')];
+				var moonEl = document.getElementById('icon-moon');
+				var sunEl = document.getElementById('icon-sun');
 
-			// --- NOTIFICATIONS LOGIC ---
-			const notiBell = document.getElementById('noti-bell');
-			const notiBadge = document.getElementById('noti-badge');
-			const notiDrawer = document.getElementById('noti-drawer');
-			const notiClose = document.getElementById('noti-close');
-			const notiOverlay = document.getElementById('noti-overlay');
-			const notiList = document.getElementById('noti-list');
-			const notiReadAll = document.getElementById('noti-read-all');
+				function updateIcons() {
+					var dark = document.documentElement.classList.contains('dark');
+					if (moonEl) moonEl.style.display = dark ? 'none' : 'block';
+					if (sunEl) sunEl.style.display = dark ? 'block' : 'none';
+				}
+
+				toggles.forEach(function(btn) {
+					if (!btn) return;
+					btn.onclick = function() {
+						document.documentElement.classList.toggle('dark');
+						var nowDark = document.documentElement.classList.contains('dark');
+						localStorage.setItem('theme', nowDark ? 'dark' : 'light');
+						updateIcons();
+					};
+				});
+				updateIcons();
+			})();
+
+			var notiBell = document.getElementById('noti-bell');
+			var notiBellMobile = document.getElementById('noti-bell-mobile');
+			var notiBadge = document.getElementById('noti-badge');
+			var notiBadgeMobile = document.getElementById('noti-badge-mobile');
+			var notiDrawer = document.getElementById('noti-drawer');
+			var notiClose = document.getElementById('noti-close');
+			var notiOverlay = document.getElementById('noti-overlay');
+			var notiList = document.getElementById('noti-list');
+			var notiReadAll = document.getElementById('noti-read-all');
 
 			function toggleNoti(show) {
 				if (show) {
@@ -167,57 +187,55 @@ const { title, role } = Astro.props;
 				}
 			}
 
-			if (notiBell) notiBell.onclick = () => toggleNoti(true);
-			if (notiClose) notiClose.onclick = () => toggleNoti(false);
-			if (notiOverlay) notiOverlay.onclick = () => toggleNoti(false);
+			if (notiBell) notiBell.onclick = function() { toggleNoti(true); };
+			if (notiBellMobile) notiBellMobile.onclick = function() { toggleNoti(true); };
+			if (notiClose) notiClose.onclick = function() { toggleNoti(false); };
+			if (notiOverlay) notiOverlay.onclick = function() { toggleNoti(false); };
 
-			async function fetchNotifications() {
+			function fetchNotifications() {
 				if (!notiList) return;
-				try {
-					const res = await fetch(`${API_BASE}/api/notifications`, { credentials: 'include' });
-					const data = await res.json();
-					
-					if (data.length === 0) {
-						notiList.innerHTML = '<div class="text-center py-10 text-slate-400 text-sm italic">Bildiriminiz bulunmuyor.</div>';
-						if (notiBadge) notiBadge.classList.add('hidden');
-						return;
-					}
-
-					const hasUnread = data.some(n => !n.is_read);
-					if (notiBadge) {
-						if (hasUnread) notiBadge.classList.remove('hidden');
-						else notiBadge.classList.add('hidden');
-					}
-
-					notiList.innerHTML = data.map(n => `
-						<div class="p-3 rounded-xl border ${n.is_read ? 'bg-white border-slate-100 opacity-70' : 'bg-blue-50/50 border-blue-100 shadow-sm'} transition-all cursor-pointer hover:shadow-md" onclick="markAsRead(${n.id}, '${n.link}')">
-							<p class="text-sm font-bold text-slate-800">${n.title}</p>
-							<p class="text-xs text-slate-600 mt-1">${n.message}</p>
-							<p class="text-[10px] text-slate-400 mt-2">${new Date(n.created_at).toLocaleString('tr-TR')}</p>
-						</div>
-					`).join('');
-				} catch (err) {
-					notiList.innerHTML = '<div class="text-center py-10 text-red-400 text-sm">Hata oluştu.</div>';
-				}
+				fetch(API_BASE + '/api/notifications', { credentials: 'include' })
+					.then(function(r) { return r.json(); })
+					.then(function(data) {
+						if (data.length === 0) {
+							notiList.innerHTML = '<div class="text-center py-10 text-slate-400 text-sm italic">Bildiriminiz bulunmuyor.</div>';
+							if (notiBadge) notiBadge.classList.add('hidden');
+							if (notiBadgeMobile) notiBadgeMobile.classList.add('hidden');
+							return;
+						}
+						var hasUnread = data.some(function(n) { return !n.is_read; });
+						[notiBadge, notiBadgeMobile].forEach(function(b) {
+							if (b) { if (hasUnread) b.classList.remove('hidden'); else b.classList.add('hidden'); }
+						});
+						notiList.innerHTML = data.map(function(n) {
+							return '<div class="p-3 rounded-xl border ' + (n.is_read ? 'bg-white border-slate-100 opacity-70' : 'bg-blue-50/50 border-blue-100 shadow-sm') + ' transition-all cursor-pointer hover:shadow-md fade-in" onclick="markAsRead(' + n.id + ', \'' + (n.link || '') + '\')">' +
+								'<p class="text-sm font-bold text-slate-800">' + n.title + '</p>' +
+								'<p class="text-xs text-slate-600 mt-1">' + n.message + '</p>' +
+								'<p class="text-[10px] text-slate-400 mt-2">' + new Date(n.created_at).toLocaleString('tr-TR') + '</p></div>';
+						}).join('');
+					}).catch(function() {
+						notiList.innerHTML = '<div class="text-center py-10 text-red-400 text-sm">Hata olustu.</div>';
+					});
 			}
 
-			window.markAsRead = async (id, link) => {
-				await fetch(`${API_BASE}/api/notifications/${id}/read`, { method: 'PATCH', credentials: 'include' });
-				if (link && link !== 'null') window.location.href = link;
-				else fetchNotifications();
+			window.markAsRead = function(id, link) {
+				fetch(API_BASE + '/api/notifications/' + id + '/read', { method: 'PATCH', credentials: 'include' })
+					.then(function() {
+						if (link && link !== 'null' && link !== '') window.location.href = link;
+						else fetchNotifications();
+					});
 			};
 
 			if (notiReadAll) {
-				notiReadAll.onclick = async () => {
-					await fetch(`${API_BASE}/api/notifications/read-all`, { method: 'POST', credentials: 'include' });
-					fetchNotifications();
+				notiReadAll.onclick = function() {
+					fetch(API_BASE + '/api/notifications/read-all', { method: 'POST', credentials: 'include' })
+						.then(function() { fetchNotifications(); });
 				};
 			}
 
-			// Initial check for badge
-			if (window.location.pathname !== '/login') {
+			if (window.location.pathname !== '/login' && window.location.pathname !== '/register' && window.location.pathname !== '/') {
 				fetchNotifications();
-				setInterval(fetchNotifications, 60000); // Check every minute
+				setInterval(fetchNotifications, 30000);
 			}
 		</script>
 	</body>
