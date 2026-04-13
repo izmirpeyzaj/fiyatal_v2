@@ -33,6 +33,7 @@ import { History, Search, Filter, ChevronRight, Clock, CheckCircle, XCircle } fr
 	</div>
 
 	<script is:inline>
+		const API_BASE = 'http://localhost:3001';
 		const container = document.getElementById('history-container');
 		const emptyState = document.getElementById('empty-state');
 		const filterBtns = document.querySelectorAll('.filter-btn');
@@ -42,7 +43,7 @@ import { History, Search, Filter, ChevronRight, Clock, CheckCircle, XCircle } fr
 				// For the sake of demonstration, we'll fetch all and filter client-side 
 				// since I haven't added specific seller-history endpoint to backend yet
 				// I will use a general proxy if needed, but normally we'd have /api/seller/offers
-				const res = await fetch('http://localhost:3001/api/seller/offers', { credentials: 'include' }); 
+				const res = await fetch(`${API_BASE}/api/seller/offers`, { credentials: 'include' }); 
 				const offers = await res.json();
 				
 				if (offers.length === 0) {

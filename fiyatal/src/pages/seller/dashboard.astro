@@ -51,12 +51,13 @@ import { ShoppingBag, ChevronRight, Camera, MapPin, Clock, Folder, Star, ShieldC
 	</div>
 
 	<script is:inline>
+		const API_BASE = 'http://localhost:3001';
 		const container = document.getElementById('requests-container');
 		const emptyState = document.getElementById('empty-state');
 
 		async function loadRequests() {
 			try {
-				const res = await fetch('http://localhost:3001/api/seller/requests', { credentials: 'include' });
+				const res = await fetch(`${API_BASE}/api/seller/requests`, { credentials: 'include' });
 				const requests = await res.json();
 
 				if (requests.length === 0) {
@@ -108,14 +109,14 @@ import { ShoppingBag, ChevronRight, Camera, MapPin, Clock, Folder, Star, ShieldC
 				// For now, let's assume Satıcı can see their own stats if we had a /api/seller/profile
 				// But since we have /api/seller/:id/rating, we'll need the ID.
 				// In a real app, we'd get this from the session token.
-				const res = await fetch('http://localhost:3001/api/users/profile', { credentials: 'include' }); // Fixed endpoint
+				const res = await fetch(`${API_BASE}/api/users/profile`, { credentials: 'include' }); // Fixed endpoint
 				const user = await res.json();
 				
 				if (user.is_verified) {
 					document.getElementById('verified-pill').classList.remove('hidden');
 				}
 				
-				const ratingRes = await fetch(`http://localhost:3001/api/seller/${user.id}/rating`, { credentials: 'include' });
+				const ratingRes = await fetch(`${API_BASE}/api/seller/${user.id}/rating`, { credentials: 'include' });
 				const ratingData = await ratingRes.json();
 				if (ratingData && ratingData.average) {
 					document.getElementById('avg-rating').textContent = ratingData.average.toFixed(1);

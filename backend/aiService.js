@@ -1,49 +1,49 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 async function analyzeOffer(offerData, requestDetails) {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = `
-        Sen bir B2B satın alma uzmanısın. Aşağıdaki ihale talebi ve gelen teklifi analiz edip alıcıya "En Mantıklı Seçim" raporu sunmanı istiyorum.
-        Analizi profesyonel, yapıcı ve tamamen Türkçe yap.
-        
-        TALEBİN DETAYLARI:
-        Başlık: ${requestDetails.title}
-        Nakliye Şartı: ${requestDetails.shipping_note === 'included' ? 'Dahil' : 'Hariç'}
-        Gereksinimler: ${requestDetails.photo_required ? 'Fotoğraf Zorunlu' : ''}, ${requestDetails.location_required ? 'Konum Zorunlu' : ''}
-        
-        TEKLİFİN DETAYLARI:
-        Satıcı Şirket: ${offerData.company_name}
-        Satıcı Puanı: ${offerData.rating}/5
-        Toplam Tutar: ${offerData.total_price} ₺
-        Nakliye Durumu: ${offerData.shipping_included ? 'Dahil' : 'Hariç'}
-        Satıcı Notu: ${offerData.notes || 'Not eklenmemiş'}
-        Fotoğraflar: ${offerData.items.filter(i => i.photo_url).length} adet ürün fotoğrafı eklenmiş.
-        
-        ANALİZ KRİTERLERİ:
-        1. Fiyatın rekabetçiliği (Talebe göre değerlendir).
-        2. Satıcının güvenilirliği (Puanı 4 altındaysa uyar).
-        3. Nakliye ve lojistik uyumu.
-        4. Teknik dökümantasyon (Fotoğrafların varlığı).
-        5. Genel Skor (1-100 arası).
-        
-        ÇIKTI FORMATI (Markdown):
-        ### 🤖 AI Analiz Raporu
-        
-        **Genel Değerlendirme:** [1-2 cümlelik özet]
-        
-        #### ✅ Güçlü Yönler
-        - [X] ...
-        
-        #### ⚠️ Dikkat Edilmesi Gerekenler
-        - [!] ...
-        
-        #### 📈 Karar Önerisi
-        [Alıcıya bu teklifi neden kabul etmesi veya etmemesi gerektiğini söyle]
-        
+        Sen bir B2B satin alma uzmanisin. Asagidaki ihale talebi ve gelen teklifi analiz edip aliciya rapor sun.
+        Analizi profesyonel, yapici ve tamamen Turkce yap.
+
+        TALEBIN DETAYLARI:
+        Baslik: ${requestDetails.title}
+        Nakliye Sarti: ${requestDetails.shipping_note === 'included' ? 'Dahil' : 'Haric'}
+
+        TEKLIFIN DETAYLARI:
+        Satici Sirket: ${offerData.company_name}
+        Satici Puani: ${offerData.rating}/5
+        Toplam Tutar: ${offerData.total_price} TL
+        Nakliye Durumu: ${offerData.shipping_included ? 'Dahil' : 'Haric'}
+        Satici Notu: ${offerData.notes || 'Not eklenmemis'}
+        Fotograflar: ${offerData.items.filter(i => i.photo_url).length} adet urun fotografi eklenmis.
+
+        ANALIZ KRITERLERI:
+        1. Fiyatin rekabetciligi
+        2. Saticinin guvenilirligi (Puani 4 altindaysa uyar)
+        3. Nakliye ve lojistik uyumu
+        4. Teknik dokumantasyon
+        5. Genel Skor (1-100 arasi)
+
+        CIKTI FORMATI (Markdown):
+        ### AI Analiz Raporu
+
+        **Genel Degerlendirme:** [1-2 cumlelik ozet]
+
+        #### Guclu Yonler
+        - ...
+
+        #### Dikkat Edilmesi Gerekenler
+        - ...
+
+        #### Karar Onerisi
+        [Aliciya bu teklifi neden kabul etmesi veya etmemesi gerektigini soyle]
+
         **Yapay Zeka Skoru:** [SKOR]/100
     `;
 
@@ -51,16 +51,28 @@ async function analyzeOffer(offerData, requestDetails) {
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text();
-        
-        // Extract score from text using regex
+
         const scoreMatch = text.match(/Skoru:\s*(\d+)/i) || text.match(/\[(\d+)\]\/100/);
         const score = scoreMatch ? parseInt(scoreMatch[1]) : 70;
 
         return { text, score };
     } catch (err) {
         console.error("AI Analysis Error:", err);
-        throw new Error("AI analizi sırasında bir hata oluştu.");
+        throw new Error("AI analizi sirasinda bir hata olustu.");
     }
 }
 
-module.exports = { analyzeOffer };
+async function generateAnalysis(prompt) {
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    try {
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        return response.text();
+    } catch (err) {
+        console.error("AI Generation Error:", err);
+        throw new Error("AI analizi olusturulamadi.");
+    }
+}
+
+module.exports = { analyzeOffer, generateAnalysis };

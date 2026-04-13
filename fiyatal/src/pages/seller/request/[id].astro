@@ -69,13 +69,14 @@ const { id } = Astro.params;
 	<script is:inline src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 	<script is:inline>
+		const API_BASE = 'http://localhost:3001';
 		const id = window.location.pathname.split('/').pop();
 		const loading = document.getElementById('loading');
 		const content = document.getElementById('content');
 
 		async function loadDetail() {
 			try {
-				const res = await fetch(`http://localhost:3001/api/seller/requests/${id}`, { credentials: 'include' });
+				const res = await fetch(`${API_BASE}/api/seller/requests/${id}`, { credentials: 'include' });
 				const req = await res.json();
 
 				document.getElementById('req-title').textContent = req.title;
@@ -95,7 +96,7 @@ const { id } = Astro.params;
 				if (req.attachments && req.attachments.length > 0) {
 					attachmentsSection.classList.remove('hidden');
 					attachmentsContainer.innerHTML = req.attachments.map(asset => `
-						<a href="${asset.type === 'file' ? 'http://localhost:3001' + asset.url : asset.url}" target="_blank" class="flex items-center gap-2 px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full text-[10px] font-bold border border-slate-200 transition-colors">
+						<a href="${asset.type === 'file' ? API_BASE + asset.url : asset.url}" target="_blank" class="flex items-center gap-2 px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full text-[10px] font-bold border border-slate-200 transition-colors">
 							${asset.type === 'file' ? '📄' : '🔗'} ${asset.name}
 						</a>
 					`).join('');

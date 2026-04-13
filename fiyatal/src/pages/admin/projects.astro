@@ -29,9 +29,10 @@ import { Folder, Search, Filter, ChevronRight, Building2, Calendar } from 'lucid
 	</div>
 
 	<script is:inline>
+		const API_BASE = 'http://localhost:3001';
 		async function loadProjects() {
 			try {
-				const res = await fetch('http://localhost:3001/api/admin/projects');
+				const res = await fetch(`${API_BASE}/api/admin/projects`);
 				const projects = await res.json();
 				renderProjects(projects);
 			} catch (err) { console.error(err); }

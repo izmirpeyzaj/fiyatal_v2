@@ -127,6 +127,7 @@ const { id } = Astro.params;
 	</div>
 
 	<script is:inline>
+		const API_BASE = 'http://localhost:3001';
 		const id = window.location.pathname.split('/').pop();
 		let state = {
 			items: [],
@@ -156,7 +157,7 @@ const { id } = Astro.params;
 
 		async function initQuote() {
 			try {
-				const res = await fetch(`http://localhost:3001/api/seller/requests/${id}`, { credentials: 'include' });
+				const res = await fetch(`${API_BASE}/api/seller/requests/${id}`, { credentials: 'include' });
 				const req = await res.json();
 				
 				// Deadline Check
@@ -174,7 +175,7 @@ const { id } = Astro.params;
 
 				// Revision logic: Check for existing offer
 				try {
-					const oRes = await fetch(`http://localhost:3001/api/seller/requests/${id}/my-offer`, { credentials: 'include' });
+					const oRes = await fetch(`${API_BASE}/api/seller/requests/${id}/my-offer`, { credentials: 'include' });
 					if (oRes.ok) {
 						const myOffer = await oRes.json();
 						if (myOffer) {
@@ -196,7 +197,7 @@ const { id } = Astro.params;
 
 		async function initQuote() {
 			try {
-				const res = await fetch(`http://localhost:3001/api/seller/requests/${id}`, { credentials: 'include' });
+				const res = await fetch(`${API_BASE}/api/seller/requests/${id}`, { credentials: 'include' });
 				const req = await res.json();
 				
 				// Deadline Check
@@ -214,7 +215,7 @@ const { id } = Astro.params;
 
 				// Revision logic: Check for existing offer
 				try {
-					const oRes = await fetch(`http://localhost:3001/api/seller/requests/${id}/my-offer`, { credentials: 'include' });
+					const oRes = await fetch(`${API_BASE}/api/seller/requests/${id}/my-offer`, { credentials: 'include' });
 					if (oRes.ok) {
 						const myOffer = await oRes.json();
 						if (myOffer) {
@@ -234,7 +235,7 @@ const { id } = Astro.params;
 
 		async function loadQuestions() {
 			try {
-				const res = await fetch(`http://localhost:3001/api/requests/${id}/questions`, { credentials: 'include' });
+				const res = await fetch(`${API_BASE}/api/requests/${id}/questions`, { credentials: 'include' });
 				allQuestions = await res.json();
 			} catch (err) { console.error(err); }
 		}
@@ -289,7 +290,7 @@ const { id } = Astro.params;
 			const isItemSpecific = document.getElementById('questions-list-title').textContent.includes("Kaleme");
 
 			try {
-				const res = await fetch(`http://localhost:3001/api/requests/${id}/questions`, {
+				const res = await fetch(`${API_BASE}/api/requests/${id}/questions`, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ 
@@ -434,15 +435,15 @@ const { id } = Astro.params;
 				formData.append('photo', file);
 
 				try {
-					const res = await fetch('http://localhost:3001/api/upload', {
+					const res = await fetch(`${API_BASE}/api/upload`, {
 						method: 'POST',
 						body: formData,
 						credentials: 'include'
 					});
 					const data = await res.json();
 					if (data.url) {
-						state.photos[state.items[state.currentIndex].id] = `http://localhost:3001${data.url}`;
-						preview.src = `http://localhost:3001${data.url}`;
+						state.photos[state.items[state.currentIndex].id] = `${API_BASE}${data.url}`;
+						preview.src = `${API_BASE}${data.url}`;
 						preview.style.opacity = '1';
 					} else {
 						alert('Yükleme hatası: ' + (data.error || 'Bilinmeyen hata'));

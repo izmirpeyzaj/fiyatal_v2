@@ -94,13 +94,14 @@ const { id } = Astro.params;
 	</div>
 
 	<script is:inline>
+		const API_BASE = 'http://localhost:3001';
 		const id = window.location.pathname.split('/')[3];
 		const list = document.getElementById('offers-list');
 		const emptyState = document.getElementById('empty-state');
 
 		async function loadOffers() {
 			try {
-				const res = await fetch(`http://localhost:3001/api/buyer/requests/${id}/offers`, { credentials: 'include' });
+				const res = await fetch(`${API_BASE}/api/buyer/requests/${id}/offers`, { credentials: 'include' });
 				const offers = await res.json();
 
 				if (offers.length === 0) {
@@ -142,7 +143,7 @@ const { id } = Astro.params;
 							<div class="flex flex-wrap gap-2">
 								${o.seller_lat ? '<span class="text-blue-500" title="Konum Mevcut"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>' : ''}
 								${o.attachments ? o.attachments.map(asset => `
-									<a href="${asset.type === 'file' ? 'http://localhost:3001' + asset.url : asset.url}" target="_blank" class="text-slate-400 hover:text-blue-600 transition-colors" title="${asset.name}">
+									<a href="${asset.type === 'file' ? API_BASE + asset.url : asset.url}" target="_blank" class="text-slate-400 hover:text-blue-600 transition-colors" title="${asset.name}">
 										${asset.type === 'file' ? '📄' : '🔗'}
 									</a>
 								`).join('') : ''}
@@ -173,7 +174,7 @@ const { id } = Astro.params;
 			btn.innerHTML = 'GÖNDERİLİYOR...';
 
 			try {
-				const res = await fetch(`http://localhost:3001/api/buyer/requests/${id}/invite`, {
+				const res = await fetch(`${API_BASE}/api/buyer/requests/${id}/invite`, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					credentials: 'include',
@@ -203,7 +204,7 @@ const { id } = Astro.params;
 
 		async function loadQuestions() {
 			try {
-				const res = await fetch(`http://localhost:3001/api/requests/${id}/questions`, { credentials: 'include' });
+				const res = await fetch(`${API_BASE}/api/requests/${id}/questions`, { credentials: 'include' });
 				const questions = await res.json();
 
 				if (questions.length === 0) {
@@ -261,7 +262,7 @@ const { id } = Astro.params;
 			if (!answerText.value) return;
 			submitAnswerBtn.disabled = true;
 			try {
-				const res = await fetch(`http://localhost:3001/api/questions/${currentQuestionId}/answer`, {
+				const res = await fetch(`${API_BASE}/api/questions/${currentQuestionId}/answer`, {
 					method: 'PATCH',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ answer: answerText.value }),

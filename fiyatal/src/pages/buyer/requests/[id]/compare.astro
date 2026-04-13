@@ -89,6 +89,7 @@ const { id } = Astro.params;
 	</div>
 
 	<script is:inline>
+		const API_BASE = 'http://localhost:3001';
 		const id = window.location.pathname.split('/')[3];
 		const itemsGrid = document.getElementById('items-grid');
 		const summaryBody = document.getElementById('summary-body');
@@ -96,7 +97,7 @@ const { id } = Astro.params;
 
 		async function loadMatrix() {
 			try {
-				const res = await fetch(`http://localhost:3001/api/buyer/requests/${id}/comparison`, { credentials: 'include' });
+				const res = await fetch(`${API_BASE}/api/buyer/requests/${id}/comparison`, { credentials: 'include' });
 				const data = await res.json();
 
 				if (!data || !data.items || data.items.length === 0) {
@@ -248,7 +249,7 @@ const { id } = Astro.params;
 		}
 
 		document.getElementById('btn-export-excel').onclick = () => {
-			window.location.href = `http://localhost:3001/api/buyer/requests/${id}/excel`;
+			window.location.href = `${API_BASE}/api/buyer/requests/${id}/excel`;
 		};
 
 		const aiBtn = document.getElementById('btn-ai-analyze');
@@ -266,7 +267,7 @@ const { id } = Astro.params;
 			`;
 
 			try {
-				const res = await fetch(`http://localhost:3001/api/buyer/requests/${id}/compare-all`, {
+				const res = await fetch(`${API_BASE}/api/buyer/requests/${id}/compare-all`, {
 					method: 'POST',
 					credentials: 'include'
 				});

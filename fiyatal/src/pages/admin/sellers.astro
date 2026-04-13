@@ -36,13 +36,14 @@ import { Search, UserX, UserCheck, Shield, ShoppingBag, Phone, Mail } from 'luci
 	</div>
 
 	<script is:inline>
+		const API_BASE = 'http://localhost:3001';
 		const list = document.getElementById('users-list');
 		const search = document.getElementById('user-search');
 		let allUsers = [];
 
 		async function loadUsers() {
 			try {
-				const res = await fetch('http://localhost:3001/api/admin/users?role=seller', { credentials: 'include' });
+				const res = await fetch(`${API_BASE}/api/admin/users?role=seller`, { credentials: 'include' });
 				allUsers = await res.json();
 				renderUsers(allUsers);
 			} catch (err) { console.error(err); }
@@ -94,7 +95,7 @@ import { Search, UserX, UserCheck, Shield, ShoppingBag, Phone, Mail } from 'luci
 
 		async function toggleVerify(id, is_verified) {
 			try {
-				await fetch(`http://localhost:3001/api/admin/users/${id}/verify`, {
+				await fetch(`${API_BASE}/api/admin/users/${id}/verify`, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					credentials: 'include',
@@ -107,7 +108,7 @@ import { Search, UserX, UserCheck, Shield, ShoppingBag, Phone, Mail } from 'luci
 		async function toggleStatus(id, status) {
 			if (!confirm('Satıcı durumunu değiştirmek istediğinize emin misiniz?')) return;
 			try {
-				await fetch(`http://localhost:3001/api/admin/users/${id}/status`, {
+				await fetch(`${API_BASE}/api/admin/users/${id}/status`, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					credentials: 'include',

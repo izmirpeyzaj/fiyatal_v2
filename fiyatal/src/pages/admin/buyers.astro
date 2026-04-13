@@ -35,13 +35,14 @@ import { Search, UserX, UserCheck, Shield, Mail, Phone, Calendar } from 'lucide-
 	</div>
 
 	<script is:inline>
+		const API_BASE = 'http://localhost:3001';
 		const list = document.getElementById('users-list');
 		const search = document.getElementById('user-search');
 		let allUsers = [];
 
 		async function loadUsers() {
 			try {
-				const res = await fetch('http://localhost:3001/api/admin/users?role=buyer', { credentials: 'include' });
+				const res = await fetch(`${API_BASE}/api/admin/users?role=buyer`, { credentials: 'include' });
 				allUsers = await res.json();
 				renderUsers(allUsers);
 			} catch (err) { console.error(err); }
@@ -86,7 +87,7 @@ import { Search, UserX, UserCheck, Shield, Mail, Phone, Calendar } from 'lucide-
 		async function toggleStatus(id, status) {
 			if (!confirm('Kullanıcı durumunu değiştirmek istediğinize emin misiniz?')) return;
 			try {
-				await fetch(`http://localhost:3001/api/admin/users/${id}/status`, {
+				await fetch(`${API_BASE}/api/admin/users/${id}/status`, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					credentials: 'include',

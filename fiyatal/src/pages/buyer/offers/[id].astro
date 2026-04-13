@@ -168,13 +168,14 @@ const { id } = Astro.params;
 	<script is:inline src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 	<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 	<script is:inline>
+		const API_BASE = 'http://localhost:3001';
 		const id = window.location.pathname.split('/').pop();
 		let currentOffer = null;
 		let selectedStars = 0;
 
 		async function loadOffer() {
 			try {
-				const res = await fetch(`http://localhost:3001/api/buyer/offers/${id}`, { credentials: 'include' });
+				const res = await fetch(`${API_BASE}/api/buyer/offers/${id}`, { credentials: 'include' });
 				currentOffer = await res.json();
 				const offer = currentOffer;
 
@@ -189,7 +190,7 @@ const { id } = Astro.params;
 				}
 
 				// Fetch Seller Rating
-				const ratingRes = await fetch(`http://localhost:3001/api/seller/${offer.seller_id}/rating`, { credentials: 'include' });
+				const ratingRes = await fetch(`${API_BASE}/api/seller/${offer.seller_id}/rating`, { credentials: 'include' });
 				const ratingData = await ratingRes.json();
 				if (ratingData && ratingData.average) {
 					document.getElementById('seller-rating-pill').classList.remove('hidden');
@@ -206,7 +207,7 @@ const { id } = Astro.params;
 				if (offer.attachments && offer.attachments.length > 0) {
 					attachmentsSection.classList.remove('hidden');
 					attachmentsContainer.innerHTML = offer.attachments.map(asset => `
-						<a href="${asset.type === 'file' ? 'http://localhost:3001' + asset.url : asset.url}" target="_blank" class="flex items-center gap-2 px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full text-[10px] font-bold border border-slate-200 transition-colors">
+						<a href="${asset.type === 'file' ? API_BASE + asset.url : asset.url}" target="_blank" class="flex items-center gap-2 px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full text-[10px] font-bold border border-slate-200 transition-colors">
 							${asset.type === 'file' ? '📄' : '🔗'} ${asset.name}
 						</a>
 					`).join('');
@@ -327,7 +328,7 @@ const { id } = Astro.params;
 					`;
 
 					try {
-						const res = await fetch(`http://localhost:3001/api/offers/${id}/analyze`, {
+						const res = await fetch(`${API_BASE}/api/offers/${id}/analyze`, {
 							method: 'POST',
 							credentials: 'include'
 						});
@@ -367,7 +368,7 @@ const { id } = Astro.params;
 
 				async function updateStatus(status) {
 					if(!confirm(`Bu teklifi ${status === 'accepted' ? 'kabul etmek' : 'reddetmek'} istediğinize emin misiniz?`)) return;
-					const res = await fetch(`http://localhost:3001/api/buyer/offers/${id}/status`, {
+					const res = await fetch(`${API_BASE}/api/buyer/offers/${id}/status`, {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						credentials: 'include',
@@ -401,7 +402,7 @@ const { id } = Astro.params;
 			const comment = document.getElementById('rating-comment').value;
 			const isPrivate = document.getElementById('rating-private').checked;
 
-			await fetch('http://localhost:3001/api/seller/ratings', {
+			await fetch(`${API_BASE}/api/seller/ratings`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				credentials: 'include',

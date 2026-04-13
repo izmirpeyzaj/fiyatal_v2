@@ -114,11 +114,12 @@ const { title, role } = Astro.props;
 		)}
 
 		<script is:inline>
-			// Handle user name display and logout
+			const API_BASE = 'http://localhost:3001';
+
 			const userNameDisplay = document.getElementById('nav-user-name');
 			const logoutBtn = document.getElementById('logout-btn');
 
-			fetch('http://localhost:3001/api/auth/me', { credentials: 'include' })
+			fetch(API_BASE + '/api/auth/me', { credentials: 'include' })
 				.then(res => res.json())
 				.then(data => {
 					if (data.authenticated) {
@@ -132,7 +133,7 @@ const { title, role } = Astro.props;
 
 			if (logoutBtn) {
 				logoutBtn.onclick = async () => {
-					await fetch('http://localhost:3001/api/auth/logout', { method: 'POST', credentials: 'include' });
+					await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' });
 					window.location.href = '/login';
 				};
 			}
@@ -173,7 +174,7 @@ const { title, role } = Astro.props;
 			async function fetchNotifications() {
 				if (!notiList) return;
 				try {
-					const res = await fetch('http://localhost:3001/api/notifications', { credentials: 'include' });
+					const res = await fetch(`${API_BASE}/api/notifications`, { credentials: 'include' });
 					const data = await res.json();
 					
 					if (data.length === 0) {
@@ -201,14 +202,14 @@ const { title, role } = Astro.props;
 			}
 
 			window.markAsRead = async (id, link) => {
-				await fetch(`http://localhost:3001/api/notifications/${id}/read`, { method: 'PATCH', credentials: 'include' });
+				await fetch(`${API_BASE}/api/notifications/${id}/read`, { method: 'PATCH', credentials: 'include' });
 				if (link && link !== 'null') window.location.href = link;
 				else fetchNotifications();
 			};
 
 			if (notiReadAll) {
 				notiReadAll.onclick = async () => {
-					await fetch('http://localhost:3001/api/notifications/read-all', { method: 'POST', credentials: 'include' });
+					await fetch(`${API_BASE}/api/notifications/read-all`, { method: 'POST', credentials: 'include' });
 					fetchNotifications();
 				};
 			}

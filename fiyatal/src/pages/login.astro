@@ -43,6 +43,7 @@ import { LogIn, Eye, EyeOff } from 'lucide-astro';
 	</div>
 
 	<script is:inline>
+		const API_BASE = 'http://localhost:3001';
 		const form = document.getElementById('login-form');
 		const errorMsg = document.getElementById('error-msg');
 		const submitBtn = document.getElementById('submit-btn');
@@ -68,7 +69,7 @@ import { LogIn, Eye, EyeOff } from 'lucide-astro';
 			const data = Object.fromEntries(formData.entries());
 
 			try {
-				const res = await fetch('http://localhost:3001/api/auth/login', {
+				const res = await fetch(`${API_BASE}/api/auth/login`, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					credentials: 'include',

@@ -1,12 +1,13 @@
 const Database = require('better-sqlite3');
 const path = require('path');
-const fs = require('fs');
 const bcrypt = require('bcryptjs');
 
 const dbPath = path.join(__dirname, 'fiyatal.db');
 const db = new Database(dbPath);
 
-// Create tables
+db.pragma('journal_mode = WAL');
+db.pragma('foreign_keys = ON');
+
 db.exec(`
 CREATE TABLE IF NOT EXISTS users (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -14,8 +15,8 @@ CREATE TABLE IF NOT EXISTS users (
     email         TEXT UNIQUE NOT NULL,
     password      TEXT NOT NULL,
     role          TEXT NOT NULL,
-    phone         TEXT,
-    company_name  TEXT,
+    phone         TEXT DEFAULT '',
+    company_name  TEXT DEFAULT '',
     status        TEXT DEFAULT 'active',
     is_verified   INTEGER DEFAULT 0,
     created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -55,7 +56,7 @@ CREATE TABLE IF NOT EXISTS offers (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
     request_id        INTEGER REFERENCES requests(id),
     seller_id         INTEGER REFERENCES users(id),
-    shipping_included INTEGER,
+    shipping_included INTEGER DEFAULT 0,
     seller_lat        REAL,
     seller_lng        REAL,
     seller_address    TEXT,
@@ -68,12 +69,12 @@ CREATE TABLE IF NOT EXISTS offer_items (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
     offer_id          INTEGER REFERENCES offers(id),
     request_item_id   INTEGER REFERENCES request_items(id),
-    unit_price        REAL,
+    unit_price        REAL DEFAULT 0,
     photo_url         TEXT
 );
 
 CREATE TABLE IF NOT EXISTS smtp_config (
-    id            INTEGER PRIMARY KEY CHECK (id = 1), -- Single row config
+    id            INTEGER PRIMARY KEY CHECK (id = 1),
     host          TEXT,
     port          INTEGER,
     user          TEXT,
@@ -104,7 +105,7 @@ CREATE TABLE IF NOT EXISTS seller_ratings (
     seller_id     INTEGER REFERENCES users(id),
     offer_id      INTEGER REFERENCES offers(id),
     rating        INTEGER NOT NULL CHECK(rating >= 1 AND rating <= 5),
-    comment       TEXT,
+    comment       TEXT DEFAULT '',
     is_private    INTEGER DEFAULT 0,
     created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -141,7 +142,7 @@ CREATE TABLE IF NOT EXISTS messages (
 CREATE TABLE IF NOT EXISTS user_assets (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id       INTEGER REFERENCES users(id),
-    type          TEXT NOT NULL, -- 'file' or 'link'
+    type          TEXT NOT NULL,
     name          TEXT NOT NULL,
     file_path     TEXT,
     url           TEXT,
@@ -171,7 +172,31 @@ CREATE TABLE IF NOT EXISTS offer_analyses (
 );
 `);
 
-// Handle Migration: Add project_id to requests if it doesn't exist
+db.exec(`
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_users_status ON users(status);
+CREATE INDEX IF NOT EXISTS idx_requests_buyer_id ON requests(buyer_id);
+CREATE INDEX IF NOT EXISTS idx_requests_status ON requests(status);
+CREATE INDEX IF NOT EXISTS idx_requests_project_id ON requests(project_id);
+CREATE INDEX IF NOT EXISTS idx_requests_expires_at ON requests(expires_at);
+CREATE INDEX IF NOT EXISTS idx_request_items_request_id ON request_items(request_id);
+CREATE INDEX IF NOT EXISTS idx_offers_request_id ON offers(request_id);
+CREATE INDEX IF NOT EXISTS idx_offers_seller_id ON offers(seller_id);
+CREATE INDEX IF NOT EXISTS idx_offer_items_offer_id ON offer_items(offer_id);
+CREATE INDEX IF NOT EXISTS idx_offer_items_request_item_id ON offer_items(request_item_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at);
+CREATE INDEX IF NOT EXISTS idx_seller_interests_seller_id ON seller_interests(seller_id);
+CREATE INDEX IF NOT EXISTS idx_seller_ratings_seller_id ON seller_ratings(seller_id);
+CREATE INDEX IF NOT EXISTS idx_request_questions_request_id ON request_questions(request_id);
+CREATE INDEX IF NOT EXISTS idx_user_assets_user_id ON user_assets(user_id);
+CREATE INDEX IF NOT EXISTS idx_request_attachments_request_id ON request_attachments(request_id);
+CREATE INDEX IF NOT EXISTS idx_offer_attachments_offer_id ON offer_attachments(offer_id);
+CREATE INDEX IF NOT EXISTS idx_offer_analyses_offer_id ON offer_analyses(offer_id);
+`);
+
 try {
     const tableInfo = db.prepare("PRAGMA table_info(requests)").all();
     if (!tableInfo.find(c => c.name === 'project_id')) {
@@ -202,7 +227,6 @@ try {
     console.error("Migration error (request_item_id):", err);
 }
 
-// Seed Admin User
 const adminEmail = 'admin@fiyatal.com';
 const existingAdmin = db.prepare('SELECT id FROM users WHERE email = ?').get(adminEmail);
 
@@ -215,7 +239,6 @@ if (!existingAdmin) {
     console.log('Admin user seeded successfully.');
 }
 
-// Seed Placeholder SMTP Config
 const existingSmtp = db.prepare('SELECT id FROM smtp_config WHERE id = 1').get();
 if (!existingSmtp) {
     db.prepare(`
@@ -226,4 +249,3 @@ if (!existingSmtp) {
 }
 
 module.exports = db;
-

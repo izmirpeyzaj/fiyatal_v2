@@ -53,6 +53,7 @@ import { Folder, FileText, Link, Trash2, Plus, ArrowLeft, UploadCloud } from 'lu
 	</div>
 
 	<script is:inline>
+		const API_BASE = 'http://localhost:3001';
 		const container = document.getElementById('assets-container');
 		const fileInput = document.getElementById('file-upload');
 		const linkInput = document.getElementById('link-url');
@@ -60,7 +61,7 @@ import { Folder, FileText, Link, Trash2, Plus, ArrowLeft, UploadCloud } from 'lu
 
 		async function loadAssets() {
 			try {
-				const res = await fetch('http://localhost:3001/api/user-assets', { credentials: 'include' });
+				const res = await fetch(`${API_BASE}/api/user-assets`, { credentials: 'include' });
 				const assets = await res.json();
 				
 				if (assets.length === 0) {
@@ -99,7 +100,7 @@ import { Folder, FileText, Link, Trash2, Plus, ArrowLeft, UploadCloud } from 'lu
 			const formData = new FormData();
 			formData.append('file', file);
 			try {
-				const res = await fetch('http://localhost:3001/api/upload', {
+				const res = await fetch(`${API_BASE}/api/upload`, {
 					method: 'POST',
 					credentials: 'include',
 					body: formData
@@ -112,7 +113,7 @@ import { Folder, FileText, Link, Trash2, Plus, ArrowLeft, UploadCloud } from 'lu
 			const url = linkInput.value;
 			if (!url) return;
 			try {
-				const res = await fetch('http://localhost:3001/api/user-assets/link', {
+				const res = await fetch(`${API_BASE}/api/user-assets/link`, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					credentials: 'include',
@@ -128,7 +129,7 @@ import { Folder, FileText, Link, Trash2, Plus, ArrowLeft, UploadCloud } from 'lu
 		window.deleteAsset = async (id) => {
 			if (!confirm('Bu dökümanı kütüphaneden silmek istediğinize emin misiniz?')) return;
 			try {
-				await fetch(`http://localhost:3001/api/user-assets/${id}`, { method: 'DELETE', credentials: 'include' });
+				await fetch(`${API_BASE}/api/user-assets/${id}`, { method: 'DELETE', credentials: 'include' });
 				loadAssets();
 			} catch (err) { alert('Silinemedi'); }
 		};

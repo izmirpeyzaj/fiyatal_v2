@@ -84,9 +84,10 @@ import { Settings, Save, Mail, Server, ShieldCheck, User } from 'lucide-astro';
 	</div>
 
 	<script is:inline>
+		const API_BASE = 'http://localhost:3001';
 		async function loadConfig() {
 			try {
-				const res = await fetch('http://localhost:3001/api/admin/smtp');
+				const res = await fetch(`${API_BASE}/api/admin/smtp`);
 				const config = await res.json();
 				if (config) {
 					document.getElementById('host').value = config.host || '';
@@ -109,7 +110,7 @@ import { Settings, Save, Mail, Server, ShieldCheck, User } from 'lucide-astro';
 			body.secure = document.getElementById('secure').checked;
 
 			try {
-				const res = await fetch('http://localhost:3001/api/admin/smtp', {
+				const res = await fetch(`${API_BASE}/api/admin/smtp`, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify(body)

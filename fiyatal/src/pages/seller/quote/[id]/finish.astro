@@ -100,6 +100,7 @@ const { id } = Astro.params;
 
 	<script is:inline src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 	<script is:inline>
+		const API_BASE = 'http://localhost:3001';
 		const id = window.location.pathname.split('/')[3];
 		const sessionData = JSON.parse(sessionStorage.getItem('current_quote'));
 		
@@ -176,7 +177,7 @@ const { id } = Astro.params;
 			};
 
 			try {
-				const res = await fetch('http://localhost:3001/api/seller/offers', {
+				const res = await fetch(`${API_BASE}/api/seller/offers`, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					credentials: 'include',
@@ -216,7 +217,7 @@ const { id } = Astro.params;
 			const formData = new FormData();
 			formData.append('file', file);
 			try {
-				const res = await fetch('http://localhost:3001/api/upload', {
+				const res = await fetch(`${API_BASE}/api/upload`, {
 					method: 'POST',
 					credentials: 'include',
 					body: formData
@@ -233,7 +234,7 @@ const { id } = Astro.params;
 			const url = assetLinkInput.value;
 			if(!url) return;
 			try {
-				const res = await fetch('http://localhost:3001/api/user-assets/link', {
+				const res = await fetch(`${API_BASE}/api/user-assets/link`, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					credentials: 'include',
@@ -272,7 +273,7 @@ const { id } = Astro.params;
 			libraryList.innerHTML = '<p class="text-center py-8 text-slate-400 font-bold animate-pulse">Yükleniyor...</p>';
 			libraryModal.classList.remove('hidden');
 			try {
-				const res = await fetch('http://localhost:3001/api/user-assets', { credentials: 'include' });
+				const res = await fetch(`${API_BASE}/api/user-assets`, { credentials: 'include' });
 				const assets = await res.json();
 				libraryList.innerHTML = assets.map(asset => `
 					<div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-blue-300 transition-all group">
@@ -326,7 +327,7 @@ const { id } = Astro.params;
 			};
 
 			try {
-				const res = await fetch('http://localhost:3001/api/seller/offers', {
+				const res = await fetch(`${API_BASE}/api/seller/offers`, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					credentials: 'include',

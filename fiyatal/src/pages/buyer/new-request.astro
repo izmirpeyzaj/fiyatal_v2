@@ -211,6 +211,7 @@ import { Upload, MapPin, CheckCircle, ChevronLeft, ChevronRight, FileSpreadsheet
 	<script is:inline src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 	<script is:inline>
+		const API_BASE = 'http://localhost:3001';
 		let currentStep = 1;
 		let pageState = {
 			title: '',
@@ -469,7 +470,7 @@ import { Upload, MapPin, CheckCircle, ChevronLeft, ChevronRight, FileSpreadsheet
 			};
 
 			try {
-				const res = await fetch('http://localhost:3001/api/buyer/requests', {
+				const res = await fetch(`${API_BASE}/api/buyer/requests`, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					credentials: 'include',
@@ -501,7 +502,7 @@ import { Upload, MapPin, CheckCircle, ChevronLeft, ChevronRight, FileSpreadsheet
 			formData.append('file', file);
 
 			try {
-				const res = await fetch('http://localhost:3001/api/upload', {
+				const res = await fetch(`${API_BASE}/api/upload`, {
 					method: 'POST',
 					credentials: 'include',
 					body: formData
@@ -521,7 +522,7 @@ import { Upload, MapPin, CheckCircle, ChevronLeft, ChevronRight, FileSpreadsheet
 			if (!url) return alert('Lütfen geçerli bir URL girin.');
 
 			try {
-				const res = await fetch('http://localhost:3001/api/user-assets/link', {
+				const res = await fetch(`${API_BASE}/api/user-assets/link`, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					credentials: 'include',

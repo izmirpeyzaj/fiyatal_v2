@@ -43,9 +43,10 @@ import { User, Shield, Mail, Phone, Camera } from 'lucide-astro';
 	</div>
 
 	<script is:inline>
+		const API_BASE = 'http://localhost:3001';
 		async function loadProfile() {
 			try {
-				const res = await fetch('http://localhost:3001/api/users/profile');
+				const res = await fetch(`${API_BASE}/api/users/profile`);
 				const user = await res.json();
 
 				document.getElementById('p-name').textContent = user.name;
@@ -53,7 +54,7 @@ import { User, Shield, Mail, Phone, Camera } from 'lucide-astro';
 				document.getElementById('p-email').textContent = user.email;
 				
 				document.getElementById('logout-btn-profile').onclick = async () => {
-					await fetch('http://localhost:3001/api/auth/logout', { method: 'POST' });
+					await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST' });
 					window.location.href = '/login';
 				};
 			} catch (err) { console.error(err); }

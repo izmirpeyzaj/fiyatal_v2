@@ -36,6 +36,7 @@ import { Download, FileSpreadsheet, Users, ShoppingBag, MessageSquare } from 'lu
 
 	<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 	<script is:inline>
+		const API_BASE = 'http://localhost:3001';
 		async function handleBackendExport() {
 			const btn = document.getElementById('export-all-unified');
 			const originalText = btn.innerHTML;
@@ -44,7 +45,7 @@ import { Download, FileSpreadsheet, Users, ShoppingBag, MessageSquare } from 'lu
 			btn.innerHTML = '<span>Rapor Hazırlanıyor...</span>';
 
 			try {
-				window.location.href = 'http://localhost:3001/api/admin/reports/excel';
+				window.location.href = `${API_BASE}/api/admin/reports/excel`;
 			} catch (err) {
 				alert('Dosya oluşturulamadı.');
 			} finally {
