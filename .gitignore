@@ -43,6 +43,11 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 
+# SQLite transient files (WAL/SHM should never be committed)
+*.db-wal
+*.db-shm
+*.db-journal
+
 # Project Specific Deny
 fiyatal-emergent/
 fiyatal-emergent.zip

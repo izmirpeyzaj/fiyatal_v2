@@ -38,21 +38,41 @@ import { Download, FileSpreadsheet, Users, ShoppingBag, MessageSquare } from 'lu
 	<script is:inline>
 		const API_BASE = 'http://localhost:3001';
 		async function handleBackendExport() {
+			console.log('[DEBUG] Export button clicked');
 			const btn = document.getElementById('export-all-unified');
 			const originalText = btn.innerHTML;
-			
+
 			btn.disabled = true;
 			btn.innerHTML = '<span>Rapor Hazırlanıyor...</span>';
 
 			try {
-				window.location.href = `${API_BASE}/api/admin/reports/excel`;
+				const exportUrl = `${API_BASE}/api/admin/reports/excel`;
+				console.log('[DEBUG] Fetching:', exportUrl);
+				const res = await fetch(exportUrl, { credentials: 'include' });
+				if (!res.ok) {
+					if (res.status === 401) {
+						alert('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
+						window.location.href = '/login';
+						return;
+					}
+					throw new Error('HTTP ' + res.status);
+				}
+				const blob = await res.blob();
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url;
+				const stamp = new Date().toISOString().slice(0, 10);
+				a.download = `fiyatal_rapor_${stamp}.xlsx`;
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+				setTimeout(() => URL.revokeObjectURL(url), 5000);
 			} catch (err) {
-				alert('Dosya oluşturulamadı.');
+				console.error('[DEBUG] Export error:', err);
+				alert('Dosya oluşturulamadı: ' + err.message);
 			} finally {
-				setTimeout(() => {
-					btn.disabled = false;
-					btn.innerHTML = originalText;
-				}, 2000);
+				btn.disabled = false;
+				btn.innerHTML = originalText;
 			}
 		}
 

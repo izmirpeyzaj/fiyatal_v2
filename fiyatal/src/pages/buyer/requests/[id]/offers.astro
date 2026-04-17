@@ -117,6 +117,7 @@ const { id } = Astro.params;
 					compareBtn.href = `/buyer/requests/${id}/compare`;
 				}
 
+				const esc = window.escapeHtml;
 				list.innerHTML = offers.map(o => `
 					<tr class="hover:bg-blue-50/30 transition-colors group">
 						<td class="px-6 py-4">
@@ -125,8 +126,8 @@ const { id } = Astro.params;
 									<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
 								</div>
 								<div>
-									<p class="font-bold text-slate-900">${o.seller_name}</p>
-									<p class="text-xs text-slate-500">${o.seller_company}</p>
+									<p class="font-bold text-slate-900">${esc(o.seller_name)}</p>
+									<p class="text-xs text-slate-500">${esc(o.seller_company)}</p>
 								</div>
 							</div>
 						</td>
@@ -143,7 +144,7 @@ const { id } = Astro.params;
 							<div class="flex flex-wrap gap-2">
 								${o.seller_lat ? '<span class="text-blue-500" title="Konum Mevcut"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>' : ''}
 								${o.attachments ? o.attachments.map(asset => `
-									<a href="${asset.type === 'file' ? API_BASE + asset.url : asset.url}" target="_blank" class="text-slate-400 hover:text-blue-600 transition-colors" title="${asset.name}">
+									<a href="${esc(asset.type === 'file' ? API_BASE + asset.url : asset.url)}" target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:text-blue-600 transition-colors" title="${esc(asset.name)}">
 										${asset.type === 'file' ? '📄' : '🔗'}
 									</a>
 								`).join('') : ''}

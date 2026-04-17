@@ -1,0 +1,264 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { 
+    Tag, User, FileText, MessageSquare, 
+    Brain, DollarSign, Clock, CheckCircle2,
+    ChevronRight, ArrowLeft, Calendar
+} from 'lucide-astro';
+
+const { id } = Astro.params;
+---
+
+<Layout title="Teklif Detayı" role="admin">
+    <div class="max-w-7xl mx-auto px-4 py-8" id="offer-detail" data-id={id}>
+        <div class="mb-6 flex items-center gap-2 text-sm text-slate-400">
+            <a href="/admin/dashboard" class="hover:text-blue-600 transition-colors">Admin</a>
+            <ChevronRight size={14} />
+            <a href="/admin/dashboard" class="hover:text-blue-600 transition-colors">Teklifler</a>
+            <ChevronRight size={14} />
+            <span class="text-slate-600 font-medium">Teklif #{id}</span>
+        </div>
+
+        <div id="loader" class="flex flex-col items-center justify-center py-20">
+            <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <p class="mt-4 text-slate-500 font-medium">Teklif verileri yukleniyor...</p>
+        </div>
+
+        <div id="content" class="hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <!-- Header Section -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                <div>
+                    <div class="flex items-center gap-3 mb-2">
+                        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight" id="seller-comp">...</h1>
+                        <span id="offer-status-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm">...</span>
+                    </div>
+                    <p class="text-slate-500 flex items-center gap-2 font-medium">
+                        <Tag size={16} class="text-blue-500" /> 
+                        <span id="req-title-link">İlgili Talep: ...</span> 
+                        • <Calendar size={16} /> 
+                        <span id="offer-date">...</span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left: Pricing & Items -->
+                <div class="lg:col-span-2 space-y-8">
+                    <!-- Pricing Summary -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="glass-card p-5 rounded-2xl border-l-4 border-l-blue-600">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Toplam Teklif</label>
+                            <p class="text-2xl font-black text-slate-900 mt-1" id="total-price">0.00 ₺</p>
+                        </div>
+                        <div class="glass-card p-5 rounded-2xl">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nakliye</label>
+                            <p class="text-lg font-bold text-slate-700 mt-1" id="shipping-status">...</p>
+                        </div>
+                        <div class="glass-card p-5 rounded-2xl">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">AI Skor</label>
+                            <p class="text-lg font-bold text-blue-600 mt-1" id="ai-score-display">-- / 100</p>
+                        </div>
+                    </div>
+
+                    <!-- Items Detail -->
+                    <div class="glass-card rounded-2xl overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                            <h2 class="font-bold text-slate-800">Teklif Kalemleri</h2>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+                                    <tr>
+                                        <th class="px-6 py-3">Ürün</th>
+                                        <th class="px-6 py-3">Miktar</th>
+                                        <th class="px-6 py-3">Birim Fiyat</th>
+                                        <th class="px-6 py-3">Toplam</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="offer-items-list" class="divide-y divide-slate-50"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- AI Analysis Card -->
+                    <div class="glass-card p-6 rounded-2xl bg-gradient-to-br from-blue-50/50 to-white">
+                        <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <Brain size={20} class="text-blue-600" /> AI Değerlendirmesi
+                        </h2>
+                        <div id="ai-content" class="text-sm text-slate-600 leading-relaxed space-y-3">
+                            <!-- AI Analysis Text -->
+                        </div>
+                    </div>
+
+                    <!-- Messages -->
+                    <div class="space-y-4">
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <MessageSquare size={20} class="text-blue-600" /> Mesajlaşma Geçmişi
+                        </h2>
+                        <div id="msg-list" class="space-y-4">
+                            <!-- Messages -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Seller Info & Stages -->
+                <div class="space-y-8">
+                    <!-- Seller Card -->
+                    <div class="bg-white bg-opacity-70 backdrop-blur-md border border-slate-200 shadow-sm transition-all duration-300 p-6 rounded-2xl text-center">
+                        <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mx-auto mb-4">
+                            <User size={32} />
+                        </div>
+                        <h3 class="font-bold text-slate-900" id="seller-name">...</h3>
+                        <p class="text-sm text-slate-500 mb-6" id="seller-comp-sub">...</p>
+                        <button class="bg-white border border-slate-200 text-slate-700 px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all active:scale-95 w-full" id="btn-view-seller">Satıcı Profiline Git</button>
+                    </div>
+
+                    <!-- Offer Lifecycle Timeline -->
+                    <div class="bg-white bg-opacity-70 backdrop-blur-md border border-slate-200 shadow-sm transition-all duration-300 p-6 rounded-2xl">
+                        <h2 class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <Clock size={20} class="text-blue-600" /> Teklif Aşamaları
+                        </h2>
+                        <div class="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-blue-600 before:via-slate-200 before:to-transparent">
+                            <div class="relative flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-lg z-10 shrink-0">
+                                    <CheckCircle2 size={18} />
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-slate-900">Teklif Gönderildi</p>
+                                    <p class="text-xs text-slate-500" id="stage-submitted">...</p>
+                                </div>
+                            </div>
+                            <div class="relative flex items-center gap-4">
+                                <div id="stage-ai-icon" class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 z-10 shrink-0">
+                                    <Brain size={18} />
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-slate-900">AI Analizi Yapıldı</p>
+                                    <p class="text-xs text-slate-500" id="stage-ai-text">Analiz bekleniyor</p>
+                                </div>
+                            </div>
+                            <div class="relative flex items-center gap-4">
+                                <div id="stage-msg-icon" class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 z-10 shrink-0">
+                                    <MessageSquare size={18} />
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-slate-900">Müzakere / Mesajlaşma</p>
+                                    <p class="text-xs text-slate-500" id="stage-msg-text">Mesaj trafiği yok</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script is:inline>
+        (function() {
+            const API_BASE = 'http://localhost:3001';
+            const offerId = document.getElementById('offer-detail').dataset.id;
+            const loader = document.getElementById('loader');
+            const content = document.getElementById('content');
+
+            async function loadOffer() {
+                try {
+                    const res = await fetch(`${API_BASE}/api/admin/offers/${offerId}`, { credentials: 'include' });
+                    const data = await res.json();
+                    if (data.error) throw new Error(data.error);
+                    renderOffer(data);
+                } catch (err) {
+                    console.error(err);
+                    loader.innerHTML = `<p class="text-red-500 font-bold">Hata: ${err.message}</p>`;
+                }
+            }
+
+            function renderOffer(data) {
+                const esc = window.escapeHtml || (s => s);
+                
+                document.getElementById('seller-comp').textContent = data.seller_company;
+                document.getElementById('seller-comp-sub').textContent = data.seller_company;
+                document.getElementById('seller-name').textContent = data.seller_name;
+                document.getElementById('offer-date').textContent = new Date(data.submitted_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+                document.getElementById('shipping-status').textContent = data.shipping_included ? 'Nakliye Dahil' : 'Nakliye Hariç';
+                
+                const reqLink = document.getElementById('req-title-link');
+                reqLink.innerHTML = `İlgili Talep: <a href="/admin/requests/${data.request_id}" class="text-blue-600 hover:underline">#${data.request_id} - ${esc(data.request_title)}</a>`;
+
+                const statusBadge = document.getElementById('offer-status-badge');
+                statusBadge.textContent = data.status.toUpperCase();
+                statusBadge.className = `px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm ${
+                    data.status === 'accepted' ? 'bg-green-100 text-green-700' : (data.status === 'pending' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700')
+                }`;
+
+                // Items list and Total
+                let total = 0;
+                const itemsList = document.getElementById('offer-items-list');
+                itemsList.innerHTML = data.items.map(it => {
+                    const subtotal = it.unit_price * it.quantity;
+                    total += subtotal;
+                    return `
+                        <tr>
+                            <td class="px-6 py-4 font-bold text-slate-900">${esc(it.product_name || 'Ürün')}</td>
+                            <td class="px-6 py-4 text-slate-600">${it.quantity} ${esc(it.unit || '')}</td>
+                            <td class="px-6 py-4 font-medium text-slate-700">${it.unit_price.toLocaleString('tr-TR')} ₺</td>
+                            <td class="px-6 py-4 font-black text-slate-900">${subtotal.toLocaleString('tr-TR')} ₺</td>
+                        </tr>
+                    `;
+                }).join('');
+                document.getElementById('total-price').textContent = total.toLocaleString('tr-TR') + ' ₺';
+
+                // AI Content
+                const aiRoot = document.getElementById('ai-content');
+                if (data.analysis) {
+                    aiRoot.innerHTML = `
+                        <p class="font-medium text-slate-800">${esc(data.analysis.analysis_text)}</p>
+                        <div class="mt-4 p-4 bg-white/50 rounded-xl border border-blue-100">
+                            <p class="flex items-center gap-2 font-bold text-blue-700"><Brain size={16}/> Skor Gerekçesi:</p>
+                            <p class="text-xs text-slate-500 mt-1">${esc(data.analysis.score_reasoning || 'Skor gerekçesi belirtilmemiş.')}</p>
+                        </div>
+                    `;
+                    document.getElementById('ai-score-display').textContent = `${data.analysis.score} / 100`;
+                    
+                    const aiIcon = document.getElementById('stage-ai-icon');
+                    aiIcon.classList.remove('bg-slate-100', 'text-slate-400');
+                    aiIcon.classList.add('bg-blue-100', 'text-blue-600');
+                    document.getElementById('stage-ai-text').textContent = `AI Skoru: ${data.analysis.score}/100`;
+                } else {
+                    aiRoot.innerHTML = '<p class="text-slate-400 italic">Bu teklif henüz AI tarafından analiz edilmedi.</p>';
+                }
+
+                // Messages
+                const msgList = document.getElementById('msg-list');
+                if (data.messages && data.messages.length > 0) {
+                    msgList.innerHTML = data.messages.map(m => `
+                        <div class="flex gap-3 ${m.sender_id === data.seller_id ? 'flex-row' : 'flex-row-reverse'}">
+                            <div class="max-w-[80%]">
+                                <div class="p-3 rounded-2xl text-sm ${m.sender_id === data.seller_id ? 'bg-slate-100 text-slate-800' : 'bg-blue-600 text-white shadow-md shadow-blue-200'}">
+                                    ${esc(m.message_text)}
+                                </div>
+                                <p class="text-[10px] text-slate-400 mt-1 ${m.sender_id === data.seller_id ? 'text-left' : 'text-right'}">${esc(m.sender_name)} • ${new Date(m.created_at).toLocaleTimeString('tr-TR')}</p>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    const msgIcon = document.getElementById('stage-msg-icon');
+                    msgIcon.classList.remove('bg-slate-100', 'text-slate-400');
+                    msgIcon.classList.add('bg-blue-100', 'text-blue-600');
+                    document.getElementById('stage-msg-text').textContent = `${data.messages.length} adet mesaj gönderildi.`;
+                } else {
+                    msgList.innerHTML = '<div class="text-center py-6 text-slate-400 italic text-sm">Henüz mesajlaşma başlatılmadı.</div>';
+                }
+
+                document.getElementById('stage-submitted').textContent = new Date(data.submitted_at).toLocaleString('tr-TR');
+                document.getElementById('btn-view-seller').onclick = () => window.location.href = `/admin/users/${data.seller_id}`;
+
+                loader.classList.add('hidden');
+                content.classList.remove('hidden');
+            }
+
+            loadOffer();
+        })();
+    </script>
+</Layout>
+
+<!-- Styles moved to utility classes -->

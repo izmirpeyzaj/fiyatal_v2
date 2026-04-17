@@ -144,13 +144,15 @@ router.get('/requests/:id/offers', requireAuth, requireRole('buyer'), (req, res)
 
 router.get('/offers/:id', requireAuth, requireRole('buyer'), (req, res) => {
     const offer = db.prepare(`
-        SELECT o.*, u.name as seller_name, u.company_name as seller_company, u.phone as seller_phone
+        SELECT o.*, u.name as seller_name, u.company_name as seller_company, u.phone as seller_phone, r.buyer_id
         FROM offers o
         JOIN users u ON o.seller_id = u.id
+        JOIN requests r ON o.request_id = r.id
         WHERE o.id = ?
     `).get(req.params.id);
 
     if (!offer) return res.status(404).json({ error: 'Teklif bulunamadi.' });
+    if (offer.buyer_id !== req.session.userId) return res.status(403).json({ error: 'Bu teklif size ait degil.' });
 
     const items = db.prepare(`
         SELECT oi.*, ri.properties
@@ -164,14 +166,18 @@ router.get('/offers/:id', requireAuth, requireRole('buyer'), (req, res) => {
 
 router.post('/offers/:id/status', requireAuth, requireRole('buyer'), validateOfferStatus, (req, res) => {
     const { status } = req.body;
-    db.prepare('UPDATE offers SET status = ? WHERE id = ?').run(status, req.params.id);
 
     const offer = db.prepare(`
-        SELECT o.seller_id, r.title, o.request_id
+        SELECT o.seller_id, r.title, o.request_id, r.buyer_id
         FROM offers o
         JOIN requests r ON o.request_id = r.id
         WHERE o.id = ?
     `).get(req.params.id);
+
+    if (!offer) return res.status(404).json({ error: 'Teklif bulunamadi.' });
+    if (offer.buyer_id !== req.session.userId) return res.status(403).json({ error: 'Bu teklif size ait degil.' });
+
+    db.prepare('UPDATE offers SET status = ? WHERE id = ?').run(status, req.params.id);
 
     if (offer) {
         notificationService.createNotification(
@@ -189,6 +195,10 @@ router.post('/offers/:id/status', requireAuth, requireRole('buyer'), validateOff
 router.get('/requests/:id/comparison', requireAuth, requireRole('buyer'), (req, res) => {
     try {
         const requestId = req.params.id;
+        const ownReq = db.prepare('SELECT buyer_id FROM requests WHERE id = ?').get(requestId);
+        if (!ownReq) return res.status(404).json({ error: 'Talep bulunamadi.' });
+        if (ownReq.buyer_id !== req.session.userId) return res.status(403).json({ error: 'Bu talep size ait degil.' });
+
         const items = db.prepare('SELECT * FROM request_items WHERE request_id = ? ORDER BY item_order').all(requestId);
 
         const offers = db.prepare(`
@@ -313,8 +323,15 @@ router.get('/requests/:id/excel', requireAuth, requireRole('buyer'), asyncHandle
     res.end();
 }));
 
+const compareAllCache = new Map();
+const COMPARE_CACHE_TTL_MS = 10 * 60 * 1000;
+
 router.post('/requests/:id/compare-all', requireAuth, requireRole('buyer'), asyncHandler(async (req, res) => {
     const requestId = req.params.id;
+
+    const ownReq = db.prepare('SELECT buyer_id FROM requests WHERE id = ?').get(requestId);
+    if (!ownReq) return res.status(404).json({ error: 'Talep bulunamadi.' });
+    if (ownReq.buyer_id !== req.session.userId) return res.status(403).json({ error: 'Bu talep size ait degil.' });
 
     const offers = db.prepare(`
         SELECT o.*, u.company_name, u.is_verified,
@@ -326,6 +343,13 @@ router.post('/requests/:id/compare-all', requireAuth, requireRole('buyer'), asyn
     `).all(requestId);
 
     if (offers.length === 0) return res.status(400).json({ error: 'Henuz teklif yok.' });
+
+    // Cache key: request + offer count + sum of total prices (invalidates on any offer change)
+    const cacheKey = `${requestId}:${offers.length}:${offers.reduce((s, o) => s + (o.total_price || 0), 0)}`;
+    const cached = compareAllCache.get(cacheKey);
+    if (cached && (Date.now() - cached.at) < COMPARE_CACHE_TTL_MS) {
+        return res.json({ success: true, report: cached.report, cached: true });
+    }
 
     const request = db.prepare('SELECT title FROM requests WHERE id = ?').get(requestId);
 
@@ -345,6 +369,12 @@ router.post('/requests/:id/compare-all', requireAuth, requireRole('buyer'), asyn
     `;
 
     const report = await aiService.generateAnalysis(analysisPrompt);
+    compareAllCache.set(cacheKey, { at: Date.now(), report });
+    // Simple LRU-ish eviction
+    if (compareAllCache.size > 200) {
+        const firstKey = compareAllCache.keys().next().value;
+        compareAllCache.delete(firstKey);
+    }
     res.json({ success: true, report });
 }));
 
@@ -352,10 +382,12 @@ router.post('/requests/:id/invite', requireAuth, requireRole('buyer'), asyncHand
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: 'E-posta adresi gereklidir.' });
 
+    const request = db.prepare('SELECT title, buyer_id FROM requests WHERE id = ?').get(req.params.id);
+    if (!request) return res.status(404).json({ error: 'Talep bulunamadi.' });
+    if (request.buyer_id !== req.session.userId) return res.status(403).json({ error: 'Bu talep size ait degil.' });
+
     const token = crypto.randomBytes(16).toString('hex');
     db.prepare('INSERT INTO invitations (request_id, email, token) VALUES (?, ?, ?)').run(req.params.id, email, token);
-
-    const request = db.prepare('SELECT title FROM requests WHERE id = ?').get(req.params.id);
     const buyer = db.prepare('SELECT company_name FROM users WHERE id = ?').get(req.session.userId);
 
     await emailService.sendInvitation(email, buyer.company_name, request.title, token);

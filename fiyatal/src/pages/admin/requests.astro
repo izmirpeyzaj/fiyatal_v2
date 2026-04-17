@@ -51,8 +51,12 @@ import { Search, ShoppingBag, Folder, MessageSquare, Clock, Filter } from 'lucid
 		function renderReqs(reqs) {
 			list.innerHTML = reqs.map(r => `
 				<tr class="hover:bg-slate-50 transition-colors">
-					<td class="px-6 py-4 font-bold text-slate-900">${r.title}</td>
-					<td class="px-6 py-4 font-medium text-slate-500">${r.buyer_company}</td>
+					<td class="px-6 py-4 font-bold text-slate-900 leading-none">
+						<a href="/admin/requests/${r.id}" class="hover:text-blue-600 hover:underline transition-colors">${r.title}</a>
+					</td>
+					<td class="px-6 py-4 font-medium text-slate-500">
+						<a href="/admin/users/${r.buyer_id}" class="hover:text-blue-600 hover:underline transition-colors">${r.buyer_company}</a>
+					</td>
 					<td class="px-6 py-4">
 						<div class="flex items-center gap-1.5 text-slate-700 font-bold">
 							<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
