@@ -264,7 +264,7 @@ router.get('/requests/:id', requireAuth, requireRole('admin'), (req, res) => {
     `).all(request.id);
     
     const invites = db.prepare('SELECT * FROM invitations WHERE request_id = ?').all(request.id);
-    const auditLogs = db.prepare('SELECT * FROM audit_logs WHERE entity_type = "request" AND entity_id = ? ORDER BY created_at ASC').all(request.id);
+    const auditLogs = db.prepare("SELECT * FROM audit_logs WHERE entity_type = 'request' AND entity_id = ? ORDER BY created_at ASC").all(request.id);
 
     res.json({ ...request, items, offers, invites, auditLogs });
 });
@@ -323,7 +323,7 @@ router.get('/users/:id', requireAuth, requireRole('admin'), (req, res) => {
     } else if (user.role === 'seller') {
         stats = {
             total_offers: db.prepare('SELECT COUNT(*) as count FROM offers WHERE seller_id = ?').get(user.id).count,
-            accepted_offers: db.prepare('SELECT COUNT(*) as count FROM offers WHERE seller_id = ? AND status = "accepted"').get(user.id).count,
+            accepted_offers: db.prepare("SELECT COUNT(*) as count FROM offers WHERE seller_id = ? AND status = 'accepted'").get(user.id).count,
             avg_rating: db.prepare('SELECT AVG(rating) as avg FROM seller_ratings WHERE seller_id = ?').get(user.id).avg || 0
         };
     }
