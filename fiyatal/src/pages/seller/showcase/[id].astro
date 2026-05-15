@@ -217,11 +217,10 @@ const { id } = Astro.params;
 
 				if (seller.certificates && seller.certificates.length > 0) {
 					document.getElementById('certs-section').classList.remove('hidden');
-					var esc = window.escapeHtml;
 					var certsHtml = seller.certificates.map(function(cert) {
 						return '<div class="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-xs font-bold border border-green-100">' +
 							'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>' +
-							esc(cert) + '</div>';
+							cert + '</div>';
 					}).join('');
 					document.getElementById('certs-container').innerHTML = certsHtml;
 				}
@@ -244,8 +243,8 @@ const { id } = Astro.params;
 								'</div>' +
 								'<span class="text-[10px] font-bold text-slate-400">' + date + '</span>' +
 							'</div>' +
-							(r.comment ? '<p class="text-sm text-slate-600 font-medium mt-2">' + window.escapeHtml(r.comment) + '</p>' : '') +
-							(r.buyer_company ? '<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-3">' + window.escapeHtml(r.buyer_company) + '</p>' : '') +
+							(r.comment ? '<p class="text-sm text-slate-600 font-medium mt-2">' + r.comment + '</p>' : '') +
+							(r.buyer_company ? '<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-3">' + r.buyer_company + '</p>' : '') +
 						'</div>';
 					}).join('');
 					document.getElementById('ratings-container').innerHTML = ratingsHtml;

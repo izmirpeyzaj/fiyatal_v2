@@ -73,7 +73,6 @@ import { Folder, FileText, Link, Trash2, Plus, ArrowLeft, UploadCloud } from 'lu
 					return;
 				}
 
-				const esc = window.escapeHtml;
 				container.innerHTML = assets.map(asset => `
 					<div class="glass-card p-4 rounded-2xl flex items-center justify-between group hover:shadow-xl transition-all border-slate-100 hover:border-blue-200">
 						<div class="flex items-center gap-4 overflow-hidden">
@@ -81,7 +80,7 @@ import { Folder, FileText, Link, Trash2, Plus, ArrowLeft, UploadCloud } from 'lu
 								${asset.type === 'file' ? '📄' : '🔗'}
 							</div>
 							<div class="overflow-hidden">
-								<p class="font-black text-slate-900 text-sm truncate">${esc(asset.name)}</p>
+								<p class="font-black text-slate-900 text-sm truncate">${asset.name}</p>
 								<p class="text-[10px] text-slate-400 font-medium mt-0.5">${new Date(asset.created_at).toLocaleDateString('tr-TR')} • ${asset.type === 'file' ? 'Dosya' : 'Dış Bağıntı'}</p>
 							</div>
 						</div>

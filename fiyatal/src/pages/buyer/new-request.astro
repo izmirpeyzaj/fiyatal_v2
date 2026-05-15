@@ -477,6 +477,7 @@ import { Upload, MapPin, CheckCircle, ChevronLeft, ChevronRight, FileSpreadsheet
 					body: JSON.stringify(body)
 				});
 				if(res.ok) {
+					alert('Talebiniz başarıyla yayınlandı!');
 					window.location.href = '/buyer/dashboard';
 				}
 			} catch (err) {

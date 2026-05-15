@@ -6,7 +6,7 @@ const { rateLimit } = require('../middleware/rateLimit');
 
 const router = express.Router();
 
-const authRateLimit = rateLimit({ windowMs: 60000, max: 20, message: 'Cok fazla giris denemesi. Lutfen biraz bekleyin.' });
+const authRateLimit = rateLimit({ windowMs: 60000, max: 10, message: 'Cok fazla giris denemesi. 1 dakika bekleyin.' });
 
 router.post('/register', authRateLimit, validateRegister, (req, res) => {
     const { name, email, password, role, company_name, phone } = req.body;
@@ -70,22 +70,14 @@ router.get('/me', (req, res) => {
 });
 
 router.post('/logout', (req, res) => {
-    req.session.destroy((err) => {
-        if (err) {
-            console.error('Logout session destroy error:', err);
-            return res.status(500).json({ error: 'Oturum kapatılamadı.' });
-        }
-        res.clearCookie('connect.sid');
-        res.json({ success: true });
-    });
+    req.session.destroy();
+    res.json({ success: true });
 });
 
 router.get('/logout', (req, res) => {
-    req.session.destroy((err) => {
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4321';
-        res.clearCookie('connect.sid');
-        res.redirect(`${frontendUrl}/login`);
-    });
+    req.session.destroy();
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4321';
+    res.redirect(`${frontendUrl}/login`);
 });
 
 module.exports = router;

@@ -120,13 +120,13 @@ import { Send, ArrowLeft, MessageSquare, User } from 'lucide-astro';
 						'<div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold ' + (isSent ? 'bg-blue-600' : 'bg-slate-400') + '">' +
 							'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
 						'</div>' +
-						'<span class="text-[10px] font-bold text-slate-500">' + window.escapeHtml(msg.sender_name || 'Bilinmeyen') + '</span>' +
-						'<span class="text-[10px] text-slate-400">' + window.escapeHtml(msg.sender_company || '') + '</span>' +
+						'<span class="text-[10px] font-bold text-slate-500">' + (msg.sender_name || 'Bilinmeyen') + '</span>' +
+						'<span class="text-[10px] text-slate-400">' + (msg.sender_company || '') + '</span>' +
 					'</div>' +
 					'<div class="message-bubble ' + bubbleClass + '">' +
-						'<p class="text-sm font-medium leading-relaxed">' + window.escapeHtml(msg.message) + '</p>' +
+						'<p class="text-sm font-medium leading-relaxed">' + msg.message + '</p>' +
 					'</div>' +
-					'<span class="text-[9px] text-slate-400 mt-1 px-1">' + window.escapeHtml(time) + '</span>' +
+					'<span class="text-[9px] text-slate-400 mt-1 px-1">' + time + '</span>' +
 				'</div>';
 			}).join('');
 

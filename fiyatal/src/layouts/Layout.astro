@@ -56,7 +56,7 @@ const { title, role } = Astro.props;
 								<User size={16} />
 								<span class="text-sm font-medium" id="nav-user-name">...</span>
 							</div>
-							<button id="logout-btn" type="button" class="flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-red-600 transition-colors">
+							<button id="logout-btn" class="flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-red-600 transition-colors">
 								<LogOut size={18} />
 							</button>
 						</div>
@@ -118,179 +118,125 @@ const { title, role } = Astro.props;
 		)}
 
 		<script is:inline>
-			(function() {
-				var API_BASE = 'http://localhost:3001';
-				console.log('[DEBUG] Layout script starting (inline)');
-				
-				// --- Global helpers: XSS-safe HTML escape + 401-aware fetch wrapper ---
-				window.escapeHtml = function(s) {
-					if (s === null || s === undefined) return '';
-					return String(s)
-						.replace(/&/g, '&amp;')
-						.replace(/</g, '&lt;')
-						.replace(/>/g, '&gt;')
-						.replace(/"/g, '&quot;')
-						.replace(/'/g, '&#39;');
-				};
-				window.apiFetch = function(url, options) {
-					options = options || {};
-					if (!('credentials' in options)) options.credentials = 'include';
-					return fetch(url, options).then(function(r) {
-						if (r.status === 401) {
-							var p = window.location.pathname;
-							if (p !== '/login' && p !== '/register' && p !== '/') {
-								window.location.href = '/login';
-							}
+			var API_BASE = 'http://localhost:3001';
+
+			var userNameDisplay = document.getElementById('nav-user-name');
+			var logoutBtn = document.getElementById('logout-btn');
+
+			fetch(API_BASE + '/api/auth/me', { credentials: 'include' })
+				.then(function(r) { return r.json(); })
+				.then(function(data) {
+					if (data.authenticated) {
+						if (userNameDisplay) userNameDisplay.textContent = data.user.name;
+					} else {
+						var p = window.location.pathname;
+						if (p !== '/login' && p !== '/register' && p !== '/') {
+							window.location.href = '/login';
 						}
-						return r;
-					});
+					}
+				});
+
+			if (logoutBtn) {
+				logoutBtn.onclick = function() {
+					fetch(API_BASE + '/api/auth/logout', { method: 'POST', credentials: 'include' })
+						.then(function() { window.location.href = '/login'; });
 				};
+			}
 
-				var userNameDisplay = document.getElementById('nav-user-name');
-				var logoutBtn = document.getElementById('logout-btn');
+			(function initTheme() {
+				var toggles = [document.getElementById('theme-toggle'), document.getElementById('theme-toggle-mobile')];
+				var moonEl = document.getElementById('icon-moon');
+				var sunEl = document.getElementById('icon-sun');
 
-				// Auth check
-				try {
-					fetch(API_BASE + '/api/auth/me', { credentials: 'include' })
-						.then(function(r) { return r.json(); })
-						.then(function(data) {
-							if (data.authenticated) {
-								if (userNameDisplay) userNameDisplay.textContent = data.user.name;
-							} else {
-								var p = window.location.pathname;
-								if (p !== '/login' && p !== '/register' && p !== '/') {
-									window.location.href = '/login';
-								}
-							}
-						}).catch(function(e) { console.error('[DEBUG] /api/auth/me failed:', e); });
-				} catch (e) { console.error('[DEBUG] Auth fetch block failed:', e); }
-
-				// Logout Handler
-				if (logoutBtn) {
-					console.log('[DEBUG] Logout button found, attaching handler');
-					logoutBtn.onclick = function(e) {
-						console.log('[DEBUG] Logout button clicked');
-						if (e) e.preventDefault();
-						fetch(API_BASE + '/api/auth/logout', { method: 'POST', credentials: 'include' })
-							.then(function(r) { 
-								console.log('[DEBUG] Logout response status:', r.status);
-								window.location.href = '/login'; 
-							})
-							.catch(function(err) { 
-								console.error('[DEBUG] Logout fetch failed:', err);
-								window.location.href = '/login'; 
-							});
-					};
-				} else {
-					console.warn('[DEBUG] Logout button NOT found in DOM');
+				function updateIcons() {
+					var dark = document.documentElement.classList.contains('dark');
+					if (moonEl) moonEl.style.display = dark ? 'none' : 'block';
+					if (sunEl) sunEl.style.display = dark ? 'block' : 'none';
 				}
 
-				// Theme toggle
-				try {
-					var toggles = [document.getElementById('theme-toggle'), document.getElementById('theme-toggle-mobile')];
-					var moonEl = document.getElementById('icon-moon');
-					var sunEl = document.getElementById('icon-sun');
-
-					function updateIcons() {
-						var dark = document.documentElement.classList.contains('dark');
-						if (moonEl) moonEl.style.display = dark ? 'none' : 'block';
-						if (sunEl) sunEl.style.display = dark ? 'block' : 'none';
-					}
-
-					toggles.forEach(function(btn) {
-						if (!btn) return;
-						btn.onclick = function() {
-							document.documentElement.classList.toggle('dark');
-							var nowDark = document.documentElement.classList.contains('dark');
-							localStorage.setItem('theme', nowDark ? 'dark' : 'light');
-							updateIcons();
-						};
-					});
-					updateIcons();
-				} catch (e) { console.error('[DEBUG] Theme init failed:', e); }
-
-				// Notifications
-				try {
-					var notiBell = document.getElementById('noti-bell');
-					var notiBellMobile = document.getElementById('noti-bell-mobile');
-					var notiBadge = document.getElementById('noti-badge');
-					var notiBadgeMobile = document.getElementById('noti-badge-mobile');
-					var notiDrawer = document.getElementById('noti-drawer');
-					var notiClose = document.getElementById('noti-close');
-					var notiOverlay = document.getElementById('noti-overlay');
-					var notiList = document.getElementById('noti-list');
-					var notiReadAll = document.getElementById('noti-read-all');
-
-					function toggleNoti(show) {
-						if (!notiDrawer) return;
-						if (show) {
-							notiDrawer.classList.remove('translate-x-full');
-							notiOverlay.classList.remove('hidden');
-							fetchNotifications();
-						} else {
-							notiDrawer.classList.add('translate-x-full');
-							notiOverlay.classList.add('hidden');
-						}
-					}
-
-					if (notiBell) notiBell.onclick = function() { toggleNoti(true); };
-					if (notiBellMobile) notiBellMobile.onclick = function() { toggleNoti(true); };
-					if (notiClose) notiClose.onclick = function() { toggleNoti(false); };
-					if (notiOverlay) notiOverlay.onclick = function() { toggleNoti(false); };
-
-					function fetchNotifications() {
-						if (!notiList) return;
-						fetch(API_BASE + '/api/notifications', { credentials: 'include' })
-							.then(function(r) { return r.json(); })
-							.then(function(data) {
-								if (data.length === 0) {
-									notiList.innerHTML = '<div class="text-center py-10 text-slate-400 text-sm italic">Bildiriminiz bulunmuyor.</div>';
-									if (notiBadge) notiBadge.classList.add('hidden');
-									if (notiBadgeMobile) notiBadgeMobile.classList.add('hidden');
-									return;
-								}
-								var hasUnread = data.some(function(n) { return !n.is_read; });
-								[notiBadge, notiBadgeMobile].forEach(function(b) {
-									if (b) { if (hasUnread) b.classList.remove('hidden'); else b.classList.add('hidden'); }
-								});
-								var esc = window.escapeHtml;
-								notiList.innerHTML = data.map(function(n) {
-									return '<div class="noti-item p-3 rounded-xl border ' + (n.is_read ? 'bg-white border-slate-100 opacity-70' : 'bg-blue-50/50 border-blue-100 shadow-sm') + ' transition-all cursor-pointer hover:shadow-md fade-in" data-id="' + Number(n.id) + '" data-link="' + esc(n.link || '') + '">' +
-										'<p class="text-sm font-bold text-slate-800">' + esc(n.title) + '</p>' +
-										'<p class="text-xs text-slate-600 mt-1">' + esc(n.message) + '</p>' +
-										'<p class="text-[10px] text-slate-400 mt-2">' + esc(new Date(n.created_at).toLocaleString('tr-TR')) + '</p></div>';
-								}).join('');
-								notiList.querySelectorAll('.noti-item').forEach(function(el) {
-									el.addEventListener('click', function() {
-										window.markAsRead(Number(el.dataset.id), el.dataset.link || '');
-									});
-								});
-							}).catch(function() {
-								notiList.innerHTML = '<div class="text-center py-10 text-red-400 text-sm">Hata olustu.</div>';
-							});
-					}
-
-					window.markAsRead = function(id, link) {
-						fetch(API_BASE + '/api/notifications/' + id + '/read', { method: 'PATCH', credentials: 'include' })
-							.then(function() {
-								if (link && link !== 'null' && link !== '') window.location.href = link;
-								else fetchNotifications();
-							});
+				toggles.forEach(function(btn) {
+					if (!btn) return;
+					btn.onclick = function() {
+						document.documentElement.classList.toggle('dark');
+						var nowDark = document.documentElement.classList.contains('dark');
+						localStorage.setItem('theme', nowDark ? 'dark' : 'light');
+						updateIcons();
 					};
-
-					if (notiReadAll) {
-						notiReadAll.onclick = function() {
-							fetch(API_BASE + '/api/notifications/read-all', { method: 'POST', credentials: 'include' })
-								.then(function() { fetchNotifications(); });
-						};
-					}
-
-					if (window.location.pathname !== '/login' && window.location.pathname !== '/register' && window.location.pathname !== '/') {
-						fetchNotifications();
-						setInterval(fetchNotifications, 30000);
-					}
-				} catch (e) { console.error('[DEBUG] Notifications init failed:', e); }
+				});
+				updateIcons();
 			})();
+
+			var notiBell = document.getElementById('noti-bell');
+			var notiBellMobile = document.getElementById('noti-bell-mobile');
+			var notiBadge = document.getElementById('noti-badge');
+			var notiBadgeMobile = document.getElementById('noti-badge-mobile');
+			var notiDrawer = document.getElementById('noti-drawer');
+			var notiClose = document.getElementById('noti-close');
+			var notiOverlay = document.getElementById('noti-overlay');
+			var notiList = document.getElementById('noti-list');
+			var notiReadAll = document.getElementById('noti-read-all');
+
+			function toggleNoti(show) {
+				if (show) {
+					notiDrawer.classList.remove('translate-x-full');
+					notiOverlay.classList.remove('hidden');
+					fetchNotifications();
+				} else {
+					notiDrawer.classList.add('translate-x-full');
+					notiOverlay.classList.add('hidden');
+				}
+			}
+
+			if (notiBell) notiBell.onclick = function() { toggleNoti(true); };
+			if (notiBellMobile) notiBellMobile.onclick = function() { toggleNoti(true); };
+			if (notiClose) notiClose.onclick = function() { toggleNoti(false); };
+			if (notiOverlay) notiOverlay.onclick = function() { toggleNoti(false); };
+
+			function fetchNotifications() {
+				if (!notiList) return;
+				fetch(API_BASE + '/api/notifications', { credentials: 'include' })
+					.then(function(r) { return r.json(); })
+					.then(function(data) {
+						if (data.length === 0) {
+							notiList.innerHTML = '<div class="text-center py-10 text-slate-400 text-sm italic">Bildiriminiz bulunmuyor.</div>';
+							if (notiBadge) notiBadge.classList.add('hidden');
+							if (notiBadgeMobile) notiBadgeMobile.classList.add('hidden');
+							return;
+						}
+						var hasUnread = data.some(function(n) { return !n.is_read; });
+						[notiBadge, notiBadgeMobile].forEach(function(b) {
+							if (b) { if (hasUnread) b.classList.remove('hidden'); else b.classList.add('hidden'); }
+						});
+						notiList.innerHTML = data.map(function(n) {
+							return '<div class="p-3 rounded-xl border ' + (n.is_read ? 'bg-white border-slate-100 opacity-70' : 'bg-blue-50/50 border-blue-100 shadow-sm') + ' transition-all cursor-pointer hover:shadow-md fade-in" onclick="markAsRead(' + n.id + ', \'' + (n.link || '') + '\')">' +
+								'<p class="text-sm font-bold text-slate-800">' + n.title + '</p>' +
+								'<p class="text-xs text-slate-600 mt-1">' + n.message + '</p>' +
+								'<p class="text-[10px] text-slate-400 mt-2">' + new Date(n.created_at).toLocaleString('tr-TR') + '</p></div>';
+						}).join('');
+					}).catch(function() {
+						notiList.innerHTML = '<div class="text-center py-10 text-red-400 text-sm">Hata olustu.</div>';
+					});
+			}
+
+			window.markAsRead = function(id, link) {
+				fetch(API_BASE + '/api/notifications/' + id + '/read', { method: 'PATCH', credentials: 'include' })
+					.then(function() {
+						if (link && link !== 'null' && link !== '') window.location.href = link;
+						else fetchNotifications();
+					});
+			};
+
+			if (notiReadAll) {
+				notiReadAll.onclick = function() {
+					fetch(API_BASE + '/api/notifications/read-all', { method: 'POST', credentials: 'include' })
+						.then(function() { fetchNotifications(); });
+				};
+			}
+
+			if (window.location.pathname !== '/login' && window.location.pathname !== '/register' && window.location.pathname !== '/') {
+				fetchNotifications();
+				setInterval(fetchNotifications, 30000);
+			}
 		</script>
 	</body>
 </html>

@@ -49,11 +49,6 @@ app.use('/api/seller', sellerRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api', sharedRoutes);
 
-app.use((req, res, next) => {
-    console.warn(`[404 NOT FOUND] ${req.method} ${req.originalUrl}`);
-    res.status(404).json({ error: 'Rota bulunamadi: ' + req.originalUrl });
-});
-
 app.use(errorHandler);
 
 cron.schedule('0 * * * *', () => {
